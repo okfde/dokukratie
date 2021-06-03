@@ -1,0 +1,49 @@
+name: bw
+description: PARLIS Baden-Württemberg
+
+publisher:
+  type: parliament
+  name: Landtag von Baden-Württemberg
+  url: https://www.landtag-bw.de/home/dokumente/parlamentsdokumentation.html
+  jurisdiction:
+    id: bw
+    name: Baden-Württemberg
+
+document_types:
+  minor_interpellation: KA
+  major_interpellation: GA
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.base:init
+    params:
+      url: "https://www.landtag-bw.de/cms/render/live/de/sites/LTBW/home/dokumente/drucksachen/contentBoxes/drucksachen.xhr?limit=10&answerState=endgueltig"
+      dateformat: "%d.%m.%Y"
+      param_names:
+        document_type: initiativeType
+        start_date: sachstandBegin
+        end_date: sachstandEnd
+      document_types:
+        - minor_interpellation
+        - major_interpellation
+    handle:
+      pass: fetch
+
+  fetch:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.bw:parse
+    handle:
+      fetch: fetch
+      clean: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

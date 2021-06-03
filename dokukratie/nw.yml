@@ -1,0 +1,77 @@
+name: nw
+description: Parlamentsdatenbank Nordrhein-Westfalen
+
+publisher:
+  type: parliament
+  name: Landtag NRW
+  url: https://www.landtag.nrw.de/home/dokumente_und_recherche/parlamentsdatenbank.html
+  jurisdiction:
+    id: nw
+    name: Nordrhein-Westfalen
+
+document_types:
+  major_interpellation: GROßE ANFRAGE
+  minor_interpellation: KLEINE ANFRAGE
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.operations:init
+    params:
+      url: "https://www.landtag.nrw.de/home/dokumente_und_recherche/parlamentsdatenbank/Suchergebnisse_Ladok.html"
+      dateformat: "%d.%m.%Y"
+      urlparams:
+        dokart: DRUCKSACHE
+        view: kurz
+      legislative_terms: 17
+      document_types:
+        - minor_interpellation
+        # - major_interpellation
+      param_names:
+        document_type: doktyp
+        legislative_term: wp
+        start_date: dokdatumvon
+        end_date: dokdatumbis
+    handle:
+      pass: fetch
+
+  fetch:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      skip_incremental:
+        urlpattern: .*view=berver$
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - "(.//div[@class='paging_center'])[1]//img[@title='nächste Seite']/.."  # next pages
+        - ".//td/span/a[contains(text(), 'Beratungsverlauf')]/.."  # detail page
+        - ".//p[contains(text(), 'Antwort')]"  # pdf url on detail page
+      meta:
+        # on detail page
+        reference: ".//p[contains(text(), 'Antwort')]/a/text()"
+        title: ".//p[@class='detailansicht'][1]/b"
+        summary: ".//p[@class='detailansicht'][2]"
+        originators: ".//p[@class='detailansicht'][1]/following-sibling::text()[2]"
+        published_at: ".//p[contains(text(), 'Antwort')]/a/following-sibling::text()[1]"
+    handle:
+      fetch: fetch
+      store: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store
+    params:
+      path: data

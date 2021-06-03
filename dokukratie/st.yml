@@ -1,0 +1,101 @@
+name: st
+description: Parlamentsdokumentation Sachsen-Anhalt
+
+publisher:
+  type: parliament
+  name: Landtag von Sachsen-Anhalt
+  url: https://padoka.landtag.sachsen-anhalt.de/starweb/PADOKA/index.htm
+  jurisdiction:
+    id: st
+    name: Sachsen-Anhalt
+
+scraper:
+  name: starweb
+  version: 6.0.01
+  url: https://padoka.landtag.sachsen-anhalt.de
+
+document_types:
+  major_interpellation: "GROßE ANFRAGE; ANTWORT"
+  minor_interpellation: "KLEINE ANFRAGE UND ANTWORT; ANTWORT"
+
+pipeline:
+
+  # emit scrape criteria
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: 7
+      document_types:
+        - minor_interpellation
+        - major_interpellation
+      url: https://padoka.landtag.sachsen-anhalt.de/starweb/PADOKA/servlet.starweb?path=PADOKA/LISSH.web&AdvancedSuche=yes
+      dateformat: "%d.%m.%Y"
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: fetch
+    handle:
+      pass: search
+
+  # perform search via post form
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: 02_LISSH_WP
+        document_type: 05_LISSH_DTYP
+        start_date: 06_LISSH_FASTDATV
+        end_date: 07_LISSH_FASTDATB
+      formdata:
+        __action: 27
+        03_LISSH_DART: "DRUCKSACHE"
+        NumPerSegment: 100
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/li[@name="RecordRepeater"]'
+      download_url: './/div[@id="aside"]//a[@class="download"]/@href'
+      next_page:
+        xpath: './/div[@class="pagination-right"]/span[@name="NextRecsConditional"]'
+        formdata:
+          __action: 64
+      meta:
+        # reference, originators, etc..: store the full paragraph for each field,
+        # extract the granular information later in `clean` stage
+        title: './/div[@class="topic"]/h1'
+        keywords: './/div[@class="topic"]/strong/a'
+        reference: './/div[@class="topic"]/p[@class="info"]'
+        originators: './/div[@class="topic"]/p[@class="info"]'
+        answerers: './/div[@class="topic"]/p[@class="info"]'
+        published_at: './/div[@class="topic"]/p[@class="info"]'
+    handle:
+      next_page: search
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: clean
+
+  # extract some metadata via regex from existing data dict
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators:
+          - .*Antwort\s+(.*)\sund\sAntwort.*
+          - ^Bezug:\sGroße\sAnfrage\s(.+?(?=\s\d)).*
+        answerers:
+          - .*\sund\sAntwort\s(.+?(?=\s\d)).*
+          - ^Bezug:\sAntwort\s(.+?(?=\s\d)).*
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

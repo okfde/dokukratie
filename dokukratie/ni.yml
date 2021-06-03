@@ -1,0 +1,74 @@
+name: dokukratie_ni
+description: Kleine Anfragen Niedersachsen
+state: ni
+
+scraper:
+  name: starweb
+  version: 6.0.01
+  url: "https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/lissh.web"
+
+document_types:
+  major: "Große Anfrage Mit Antwort"
+  minor: "Kleine Anfrage Zur Schriftlichen Beantwortung Mit Antwort"
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: 18
+      document_types: minor
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: wplist
+        document_type: Suchzeile6
+      formdata:
+        __action: 5
+        Suchzeile5: DRUCKSACHE
+        # maxtrefferlist1: "S99{ITEMS+-1:-1000000}"
+        # ReportFormatListDisplay: Vollanzeige
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/table[@id="listTable"]//ul[@class="fundstelle"]/..'
+      download_url: './/ul[@class="fundstelle"]/li[matches(text(), "^Antwort\s.*")]/a/@href'
+    handle:
+      next_page: search
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: parse
+    params:
+      store:
+        mime_group: documents
+    handle:
+      store: clean
+
+  clean:
+    method: dokukratie.util:clean
+    params:
+      extractors:
+        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators: .*Antwort\s+(.*)\sund\sAntwort.*
+        answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+    handle:
+      pass: store
+
+  store:
+    method: directory
+    params:
+      path: data

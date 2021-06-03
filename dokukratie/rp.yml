@@ -1,0 +1,88 @@
+name: dokukratie_rp
+description: Kleine Anfragen Rheinland-Pfalz
+state: rp
+
+scraper:
+  name: starweb
+  version: 6.0.01
+  url: "https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web"
+
+document_types:
+  major: "GROßE ANFRAGE; ANTWORT"
+  minor: "KLEINE ANFRAGE UND ANTWORT; ANTWORT"
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: 7
+      document_types:
+        - minor
+        # - major
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: 02_LISSH_WP
+        document_type: 05_LISSH_DTYP
+      formdata:
+        __action: 27
+        03_LISSH_DART: "DRUCKSACHE"
+        NumPerSegment: 100
+
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/tbody[@name="RecordRepeater"]'
+      download_url: './/div[@id="aside"]//a[@class="download"]/@href'
+      next_page:
+        xpath: './/div[@class="pagination-right"]/span[@name="NextRecsConditional"]'
+        formdata:
+          __action: 64
+      meta:
+        title:
+          -
+        keywords: './/div[@class="topic"]/strong/a'
+        reference: './/div[@class="topic"]/p[@class="info"]'
+        originators: './/div[@class="topic"]/p[@class="info"]'
+        answerers: './/div[@class="topic"]/p[@class="info"]'
+        published_at: './/div[@class="topic"]/p[@class="info"]'
+    handle:
+      next_page: search
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: parse
+    params:
+      store:
+        mime_group: documents
+    handle:
+      store: clean
+
+  clean:
+    method: dokukratie.util:clean
+    params:
+      extractors:
+        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators: .*Antwort\s+(.*)\sund\sAntwort.*
+        answerers: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+    handle:
+      pass: store
+
+  store:
+    method: directory
+    params:
+      path: data

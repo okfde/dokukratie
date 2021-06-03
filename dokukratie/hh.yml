@@ -1,0 +1,85 @@
+name: hh
+description: Parlamentsdokumentation Hamburgische Bürgerschaft
+
+publisher:
+  type: parliament
+  name: Hamburgische Bürgerschaft
+  url: https://www.buergerschaft-hh.de/parldok/formalkriterien
+  jurisdiction:
+    id: hh
+    name: Hamburg
+
+document_types:
+  major_interpellation: 2  # Große Anfrage
+  minor_interpellation: 3  # Kleine Anfrage
+
+scraper:
+  name: parldok
+  version: 5.4.1
+  url: https://www.buergerschaft-hh.de/parldok/formalkriterien/
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.parldok:init
+    params:
+      legislative_terms: 22
+      document_types:
+        - major_interpellation
+        - minor_interpellation
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.parldok:search
+    handle:
+      pass: parse_results
+
+  fetch_results:
+    method: fetch
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.parldok:parse_results
+    params:
+      item: './/button[@class="parldokresult-vorgang"]/../..'
+      detail_url: './/button/@onclick'
+      next_page: './/div[@class="pd_resultnavigation"]/a/@href'
+      meta:
+        reference: 'preceding-sibling::tr/td[@headers="result-nummer"]/text()'
+        originators: './/td[@headers="result-urheber"]/text()'
+        published_at: 'preceding-sibling::tr/td[@headers="result-datum"]/text()'
+    handle:
+      next_page: fetch_results
+      fetch: fetch_detail
+
+  fetch_detail:
+    method: fetch
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - ".//div[@class='element-vorgang']"
+      meta:
+        title: ".//div[@id='content']/fieldset/table/tbody/tr[2]/td[2]"
+        summary: ".//div[@id='content']/fieldset/table/tbody/tr[3]/td[2]"
+        keywords: ".//div[@id='content']/fieldset/table/tbody/tr[1]/td[2]"
+    handle:
+      fetch: fetch_detail
+      store: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store
