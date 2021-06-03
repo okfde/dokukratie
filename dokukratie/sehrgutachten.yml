@@ -1,0 +1,51 @@
+name: sehrgutachten
+description: 'Ausarbeitungen der Wissenschaftlichen Dienste des Bundestags'
+
+document_types:
+  assessment: Gutachten
+
+publisher:
+  type: parliament-other
+  id: wd
+  name: Wissenschaftliche Dienste des Deutschen Bundestages
+  url: https://www.bundestag.de/ausarbeitungen/
+  jurisdiction:
+    id: de
+    name: Deutschland
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.operations:init
+    params:
+      url: https://www.bundestag.de/ajax/filterlist/de/dokumente/ausarbeitungen/474644-474644
+      dateformat: "%s000"
+      document_types: assessment
+      urlparams:
+        limit: 10
+        startfield: date
+        endfield: date
+      param_names:
+        start_date: startdate
+        end_date: enddate
+    handle:
+      pass: fetch
+
+  fetch:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.sehrgutachten:parse
+    handle:
+      fetch: fetch
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

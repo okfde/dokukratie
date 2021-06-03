@@ -1,0 +1,69 @@
+name: parlamentsspiegel
+description: Parlamentsspiegel
+
+document_types:
+  interpellation: ANFRAGE
+
+publisher:
+  type: aggregator
+  name: Parlamentsspiegel
+  url: https://www.parlamentsspiegel.de
+  jurisdiction:
+    id: de
+    name: Deutschland
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.operations:init
+    params:
+      url: https://www.parlamentsspiegel.de/home/suchergebnisseparlamentsspiegel.html?view=kurz&sortierung=dat_desc
+      document_types: interpellation
+      dateformat: "%d.%m.%Y"
+      param_names:
+        document_type: vorgangstyp
+        start_date: datumVon
+        end_date: datumBis
+    handle:
+      pass: fetch
+
+  fetch:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      skip_incremental:
+        urlpattern: .*view=einzel.*
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - './/ul[@class="paging"]/li[@class="next"]'  # next pages
+        - './/dd[@class="link"]/a[@class="beratungsstand"]/..'  # detail page
+        - './/table//a/img[@alt="Dokument anzeigen"]/../..'  # external download url
+      meta:
+        # on detail page
+        title: ".//table/tr[2]/td[2]/text()[1]"
+        reference: ".//table/tr[3]/td[2]/text()"
+        published_at: ".//table/tr[3]/td[2]/text()"
+        state: ".//table/tr[3]/td[2]/text()"
+        meta_info: ".//table/tr[3]/td[2]/text()"
+        source_url: './/a[contains(text(),"Kurzansicht")]/@href'
+        summary: ".//table/tr[2]/td[2]"
+    handle:
+      fetch: fetch
+      store: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+        state: ([\w-]+)\s
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

@@ -1,0 +1,83 @@
+name: th
+description: Parlamentsdokumentation Thüringen
+
+publisher:
+  type: parliament
+  name: Thüringer Landtag
+  url: http://parldok.thueringen.de/ParlDok/formalkriterien/
+  jurisdiction:
+    id: th
+    name: Thüringen
+
+document_types:
+  major_interpellation: 28  # Große Anfrage
+  minor_interpellation: 29  # Kleine Anfrage
+
+scraper:
+  name: parldok
+  version: 5.6.5
+  url: http://parldok.thueringen.de/ParlDok/formalkriterien/
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.parldok:init
+    params:
+      legislative_terms: 7
+      document_types:
+        # - major_interpellation
+        - minor_interpellation
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.parldok:search
+    handle:
+      pass: fetch_results
+
+  fetch_results:
+    method: fetch
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.parldok:parse_results
+    params:
+      item: './/ul[@class="sourceGroup"]/li'
+      detail_url: './/div[@class="row resultinfo"]//span[@class="processlink"]/a/@href'
+      next_page: './/li[@class="tx-pagebrowse-page"]/button/@onclick'
+      meta:
+        title: './/div[@class="row title"]/div/a'
+        reference: './/div[@class="row resultinfo"]/div/div[3]/div'
+        published_at: './/div[@class="row resultinfo"]/div/div[1]/div'
+    handle:
+      next_page: fetch_results
+      fetch: fetch_detail
+
+  fetch_detail:
+    method: fetch
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - ".//div[@class='element-vorgang']//a[contains(text(), 'Drucksache')]/.."
+      meta:
+        originators: ".//div[@class='element-vorgang'][1]/text()"
+    handle:
+      fetch: fetch_detail
+      store: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

@@ -1,0 +1,30 @@
+name: run_scraper_tests
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Show ref
+        run: |
+          echo "$GITHUB_REF"
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get install -y -qq libicu-dev
+          python -m pip install -U pip setuptools pyicu twine wheel
+          pip install pytest pytest-env pytest-cov pytest-mock
+          make install.test
+      - name: Run the tests
+        run: make test

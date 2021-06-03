@@ -1,0 +1,80 @@
+name: dokukratie_bb
+description: Kleine Anfragen Brandenburg
+state: bb
+
+scraper:
+  name: starweb
+  version: 6.0.0
+  url: https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/index.html
+
+document_types:
+  generic: "ANTWORT"
+
+pipeline:
+
+  # emit scrape criteria
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: 7
+      document_types: generic
+      url: https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/servlet.starweb?path=LBB/ELVIS/LISSH.web&AdvancedSearch=yes
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: fetch
+    handle:
+      pass: redirect
+
+  # weird initial redirect via post form
+  redirect:
+    method: dokukratie.scrapers.starweb:post
+    params:
+      formdata:
+        __action: 41
+    handle:
+      pass: search
+
+  # perform search via post form
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: LISSH_WP_ADV
+        document_type: LISSH_DTYP
+      formdata:
+        __action: 85
+        LISSH_DART_ADV: DRUCKSACHE
+        LimitMaximumHitCount: "S99{ITEMS+-1:-10000}"
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    handle:
+      next_page: search  # resend search post form with next page
+      download: download  # yield pdf urls and detail metadata
+
+  download:
+    method: fetch
+    handle:
+      pass: clean
+
+  # extract & cleanup metadata
+  clean:
+    method: dokukratie.scrapers.util:clean
+    params:
+      extractors:
+        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators: .*Antwort\s+(.*)\sund\sAntwort.*
+        answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+    handle:
+      pass: store
+
+  store:
+    method: directory
+    params:
+      path: data

@@ -1,0 +1,88 @@
+name: dokukratie_hb
+description: Kleine Anfragen Bremen
+state: hb
+
+scraper:
+  name: starweb
+  version: 5.7.00
+  url: "https://paris.bremische-buergerschaft.de/starweb/paris/servlet.starweb?path=paris/LISSH.web"
+
+document_types:
+  minor: "KLEINE ANFRAGE UND ANTWORT DES SENATS"
+  major: "MITTEILUNG DES SENATS (ANTWORT AUF GROẞE ANFRAGEN); MITTEILUNG DES SENATS (ANTWORT AUF  GROẞE ANFRAGE)"
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: 20
+      document_types:
+        - minor
+        # - major
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: 12_LISSH_WP
+        document_type: 07_LISSH_DTYP
+      formdata:
+        __action: 19
+        08_LISSH_DART: "DRUCKSACHE"
+        LimitMaximumHitCount: S32{ITEMS+1:10000000}
+        11_LISSH_PARL: L
+
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/tbody[@name="RecordRepeater"]/tr'
+      download_url: './/td/a[matches(@href, ".*\/dokumente\/.*\.pdf$")'
+      next_page:
+        xpath: './/div[@id="seitenzahl"]//span[@name="NextRecsConditional"]'
+        formdata:
+          __action: 46
+      meta:
+        title: './/td/h2/a'
+        keywords: './/a[@name="ThesaurusLink"]'
+        reference: './/div[@class="topic"]/p[@class="info"]'
+        originators: './/div[@class="topic"]/p[@class="info"]'
+        answerers: './/div[@class="topic"]/p[@class="info"]'
+        published_at: './/div[@class="topic"]/p[@class="info"]'
+    handle:
+      next_page: search
+      download: download
+
+  download:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: parse
+    params:
+      store:
+        mime_group: documents
+    handle:
+      store: clean
+
+  clean:
+    method: dokukratie.util:clean
+    params:
+      extractors:
+        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators: .*Antwort\s+(.*)\sund\sAntwort.*
+        answerers: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+    handle:
+      pass: store
+
+  store:
+    method: directory
+    params:
+      path: data

@@ -1,0 +1,67 @@
+name: dip
+description: Dokumentations- und Informationssystem für Parlamentsmaterialien - API
+
+document_types:
+  minor_interpellation: Kleine Anfrage
+  major_interpellation: Große Anfrage
+
+publisher:
+  type: parliament
+  name: Deutscher Bundestag
+  url: https://dip.bundestag.de/
+  jurisdiction:
+    id: de
+    name: Deutschland
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.base:init
+    params:
+      url: https://search.dip.bundestag.de/api/v1/drucksache
+      document_types:
+        - minor_interpellation
+      legislative_terms: 19
+      urlparams:
+        apikey: N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464
+        f.zuordnung: BT
+      param_names:
+        start_date: f.datum.start
+        end_date: f.datum.end
+    handle:
+      pass: fetch
+
+  fetch:
+    method: fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.dip:parse
+    handle:
+      cursor: fetch
+      download: download
+      fetch_reference: fetch_reference
+
+  # if is_answer
+  fetch_reference:
+    method: fetch
+    handle:
+      pass: parse_reference
+
+  parse_reference:
+    method: dokukratie.scrapers.dip:parse_reference
+    handle:
+      pass: download
+
+  download:
+    method: fetch
+    handle:
+      pass: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store
