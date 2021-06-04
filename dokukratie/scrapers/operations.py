@@ -10,44 +10,10 @@ from memorious.operations.store import directory as memorious_store
 from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
+from .incremental import skip_incremental
 from .util import cast, ensure_date
 from .util import get_env_or_context as _geoc
-from .util import get_value_from_xp as x
 from .util import re_first  # , skip_while_testing
-
-
-def _should_continue(context, data, html=None):
-    """
-    look for a unique value used for creating the keys for `skip_incremental`
-    either in data dictionary or in html via xpath
-
-    config params (optional):
-      skip_incremental:
-        data_key: key in data dict containing unique value (default: "reference")
-        xpath: xpath to get unique value from
-        urlpattern: regex to match data["url"] against to create inc keys
-    """
-    skip_incremental = ensure_dict(context.params.get("skip_incremental"))
-    data_key = skip_incremental.get("data_key", "reference")
-    xpath = skip_incremental.get("xpath")
-    urlpattern = skip_incremental.get("urlpattern")
-    identifier = data.get(data_key)
-
-    if identifier is None:
-        if urlpattern is not None:
-            url = data.get("url", "")
-            if re.match(urlpattern, url):
-                identifier = url
-
-    if identifier is None:
-        if xpath is not None and html is not None:
-            identifier = x(xpath, html)
-
-    if identifier is None:
-        return True
-
-    # if not skip_while_testing(context, "incremental_fetch", 5):  FIXME
-    return not context.skip_incremental(identifier)
 
 
 def init(context, data=None):
@@ -101,13 +67,13 @@ def parse(context, data):
     an extended parse to handle incremental scraping
     """
 
-    if _should_continue(context, data):
+    if not skip_incremental(context, data):
         with context.http.rehash(data) as result:
             if result.html is not None:
                 # Get extra metadata from the DOM
                 parse_for_metadata(context, data, result.html)
                 # maybe data is updated with unique identifier for incremental skip
-                if _should_continue(context, data, result.html):
+                if not skip_incremental(context, data):
                     parse_html(context, data, result)
 
             rules = context.params.get("store") or {"match_all": {}}
@@ -119,7 +85,7 @@ def fetch(context, data):
     """
     an extended fetch to be able to skip_incremental based on passed data dict
     """
-    if _should_continue(context, data):
+    if not skip_incremental(context, data):
         memorious_fetch(context, data)
 
 
@@ -206,9 +172,14 @@ def clean(context, data):
 
 def store(context, data):
     """
-    an extended store to be able to quit the scraper after first store during test run
+    an extended store to be able to set skip_incremental and quit the scraper
+    after first store during test run
     """
     memorious_store(context, data)
+    incremental = ensure_dict(data.get("skip_incremental"))
+    if incremental.get("target") == context.stage.name:
+        if incremental.get("key") is not None:
+            context.set_tag(incremental["key"], True)
     if env.to_bool("TESTING_MODE"):
         context.crawler.cancel()
         context.log.debug("Cancelling crawler run because of test mode.")

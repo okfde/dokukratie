@@ -38,6 +38,12 @@ pipeline:
 
   parse:
     method: dokukratie.scrapers.sehrgutachten:parse
+    params:
+      skip_incremental:
+        key:
+          data: url
+        target:
+          stage: store
     handle:
       fetch: fetch
       download: download

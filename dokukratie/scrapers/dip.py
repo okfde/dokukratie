@@ -1,6 +1,7 @@
 from banal import ensure_list, is_mapping
 from furl import furl
 
+from .incremental import skip_incremental
 from .util import skip_while_testing
 
 
@@ -28,7 +29,7 @@ def parse(context, data):
             "wahlperiode": data["legislative_term"],
         }
         if all(any(_test(document, k, v)) for k, v in filters.items()):
-            if not context.skip_incremental(document["id"]):
+            if not skip_incremental(context, data):
                 data["reference"] = document["dokumentnummer"]
                 data["published_at"] = document["datum"]
                 data["title"] = document["titel"]

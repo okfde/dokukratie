@@ -30,7 +30,10 @@ pipeline:
     method: dokukratie.scrapers.operations:fetch
     params:
       skip_incremental:
-        urlpattern: .*view=einzel.*
+        key:
+          urlpattern: .*view=einzel.*
+        target:
+          stage: store
     handle:
       pass: parse
 

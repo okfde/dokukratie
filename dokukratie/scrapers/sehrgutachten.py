@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 from dateutil.parser import parse as dateparse
 from furl import furl
 
+from .incremental import skip_incremental
 from .util import get_value_from_xp as x
 
 MONTHS = (
@@ -101,7 +102,7 @@ def parse(context, data):
                 detail_data["reference"] = wd_match.group("doc_id")
                 detail_data["foreign_id"] = "-".join((wd_id, wd_match.group("doc_id")))
 
-            if not context.skip_incremental(detail_data):
+            if not skip_incremental(context, detail_data):
                 context.emit("download", data={**data, **detail_data})
 
         except Exception as e:
