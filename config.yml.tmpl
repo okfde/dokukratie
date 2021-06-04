@@ -1,0 +1,23 @@
+# mmmeta config template
+# put in each _mmmeta subdir
+
+metadata:
+  file_name: _file_name  # key in json metadat for file name
+  include:  # only include these keys from json metadata in meta db
+  - reference
+  - document_type
+  - legislative_term
+  - published_at
+  - modified_at
+  - retrieved_at
+  - url
+  - title
+  - originators
+  - answerers
+  - publisher:name  # nested keys are flattened with ":" between them
+  - publisher:jurisdiction:id
+  - keywords
+  unique: content_hash  # unqiue identifier for files
+public:  # simple string replacement to generate `File.public.<attr>` attributes, like:
+  # url: https://dokukratie-dev.s3.eu-central-1.amazonaws.com/<scraper_name>/{_file_name}
+  uri: s3://dokukratie-dev/<scraper_name>/{_file_name}
