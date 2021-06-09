@@ -48,6 +48,7 @@ Other scrapers:
 - [dip - Dokumentations- und Informationssystem für Parlamentsmaterialien - API](#dip)
 - [parlamentsspiegel - Parlamentsspiegel (gemeinsames Informationssystem der Landesparlamente)](#parlamentsspiegel)
 - [sehrgutachten - Gutachten der Wissenschaftlichen Dienste](#sehrgutachten)
+- [vsberichte - Verfassungsschutzberichte des Bundes und der Länder](#vsberichte)
 
 
 ### bw
@@ -213,6 +214,18 @@ https://www.bundestag.de/ajax/filterlist/de/dokumente/ausarbeitungen/474644-4746
 There is no option `DOCUMENT_TYPES` and `LEGISLATIVE_TERMS` but `START_DATE`
 and `END_DATE` are available.
 
+
+### vsberichte
+
+**Verfassungsschutzberichte des Bundes und der Länder**
+
+    memorious run vsberichte
+
+Scraped from the api from https://vsberichte.de
+
+This scraper doesn't need to run frequently as there is a new report once in a year.
+
+There are no filter options available.
 
 ## technical implementation
 

@@ -35,11 +35,7 @@ pipeline:
       pass: parse_detail
 
   parse_detail:
-    method: dokukratie.scrapers.operations:parse_json
-    params:
-      data:
-        url: file_url
-        title: title
+    method: dokukratie.scrapers.vsberichte:parse_detail
     handle:
       pass: download
 

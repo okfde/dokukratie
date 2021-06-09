@@ -2,7 +2,6 @@ from banal import ensure_list
 from furl import furl
 
 from .incremental import skip_incremental
-from .util import skip_while_testing
 
 
 def parse_list(context, data):
@@ -21,3 +20,11 @@ def parse_list(context, data):
             }
             if not skip_incremental(context, detail_data):
                 context.emit(data={**data, **detail_data})
+
+
+def parse_detail(context, data):
+    res = context.http.rehash(data)
+    data["title"] = res.json["title"]
+    f = furl(res.json["file_url"])
+    data["url"] = f.join(data["url"], "/pdfs/", f.path.segments[-1]).url
+    context.emit(data=data)
