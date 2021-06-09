@@ -74,3 +74,15 @@ def skip_while_testing(context, key=None, counter=-1):
         context.log.debug("Skipping: %s" % key)
         return True
     context.set_tag(key, tag + 1)
+
+
+def flatten_dict(d):
+    def items():
+        for key, value in d.items():
+            if isinstance(value, dict):
+                for subkey, subvalue in flatten_dict(value).items():
+                    yield key + "." + subkey, subvalue
+            else:
+                yield key, value
+
+    return dict(items())

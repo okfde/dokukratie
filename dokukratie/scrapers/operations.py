@@ -11,7 +11,7 @@ from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
-from .util import cast, ensure_date
+from .util import cast, ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
 from .util import re_first  # , skip_while_testing
 
@@ -183,3 +183,16 @@ def store(context, data):
     if env.to_bool("TESTING_MODE"):
         context.crawler.cancel()
         context.log.debug("Cancelling crawler run because of test mode.")
+
+
+def parse_json(context, data):
+    """
+    parse a json response and yield data dict based on config
+
+    key path are dot notation
+    """
+    res = context.http.rehash(data)
+    jsondata = clean_dict(flatten_dict(res.json))
+    for key, path in ensure_dict(context.params.get("data")).items():
+        data[key] = jsondata[path]
+    context.emit(data=data)
