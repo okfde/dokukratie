@@ -14,17 +14,10 @@ def parse_list(context, data):
         }
         for year in ensure_list(jurisdiction["years"]):
             detail_data = {
+                "reference": f"{publisher['id']}-{year}",
                 "publisher": publisher,
                 "published_at": f"{year}-12-31",  # FIXME
                 "url": (f / jurisdiction["jurisdiction_escaped"] / str(year)).url,
             }
             if not skip_incremental(context, detail_data):
                 context.emit(data={**data, **detail_data})
-
-
-def parse_detail(context, data):
-    res = context.http.rehash(data)
-    data["title"] = res.json["title"]
-    f = furl(res.json["file_url"])
-    data["url"] = f.join(data["url"], "/pdfs/", f.path.segments[-1]).url
-    context.emit(data=data)

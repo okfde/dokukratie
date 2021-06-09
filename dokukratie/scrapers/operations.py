@@ -193,6 +193,6 @@ def parse_json(context, data):
     """
     res = context.http.rehash(data)
     jsondata = clean_dict(flatten_dict(res.json))
-    for key, path in ensure_dict(context.params.get("data")).items():
+    for key, path in ensure_dict(context.params).items():
         data[key] = jsondata[path]
     context.emit(data=data)
