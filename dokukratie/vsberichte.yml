@@ -1,0 +1,52 @@
+name: vsberichte
+description: Verfassungsschutzberichte des Bundes und der Länder
+
+document_types:
+  report: Verfassungsschutzbericht
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.operations:init
+    params:
+      url: https://verfassungsschutzberichte.de/api
+      document_types: report
+    handle:
+      pass: fetch
+
+  fetch:
+    method: fetch
+    handle:
+      pass: parse_list
+
+  parse_list:
+    method: dokukratie.scrapers.vsberichte:parse_list
+    params:
+      skip_incremental:
+        key:
+          data: url
+        target:
+          stage: store
+    handle:
+      pass: fetch_detail
+
+  fetch_detail:
+    method: fetch
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: dokukratie.scrapers.operations:parse_json
+    params:
+      data:
+        url: file_url
+        title: title
+    handle:
+      pass: download
+
+  download:
+    method: fetch
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store
