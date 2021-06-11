@@ -21,7 +21,13 @@ def ensure_date(value, **parserkwargs):
     if isinstance(value, date):
         return value
     value = str(value)
-    return dateparse(value, **parserkwargs).date()
+    try:
+        do_raise = parserkwargs.pop("raise_on_error", False)
+        return dateparse(value, **parserkwargs).date()
+    except ParserError as e:
+        if do_raise:
+            raise e
+        return None
 
 
 def cast(value):
@@ -35,7 +41,7 @@ def cast(value):
         return float(value)
     except (TypeError, ValueError):
         try:
-            return ensure_date(value, dayfirst=True)
+            return ensure_date(value, dayfirst=True, raise_on_error=True)
         except (TypeError, ParserError):
             return value
 
