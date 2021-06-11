@@ -30,7 +30,7 @@ jobs:
       MEMORIOUS_EXPIRE: 30
       MEMORIOUS_HTTP_TIMEOUT: 60
       MEMORIOUS_CONTINUE_ON_ERROR: 1
-      REDIS_URL: redis://redis:6379/0
+      REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v2
         with:
@@ -43,7 +43,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          sudo apt-get install -y -qq libicu-dev
+          sudo apt-get install -y -qq libicu-dev libpq-dev
           pip install --no-cache-dir -q pyicu awscli
           pip install --no-cache-dir -q -e .
           pip install --no-cache-dir -q -r requirements-prod.txt
