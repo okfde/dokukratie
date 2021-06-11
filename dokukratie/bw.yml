@@ -15,7 +15,7 @@ document_types:
 
 pipeline:
   init:
-    method: dokukratie.scrapers.base:init
+    method: dokukratie.scrapers.operations:init
     params:
       url: "https://www.landtag-bw.de/cms/render/live/de/sites/LTBW/home/dokumente/drucksachen/contentBoxes/drucksachen.xhr?limit=10&answerState=endgueltig"
       dateformat: "%d.%m.%Y"
@@ -36,6 +36,10 @@ pipeline:
 
   parse:
     method: dokukratie.scrapers.bw:parse
+    params:
+      skip_incremental:
+        target:
+          stage: store
     handle:
       fetch: fetch
       clean: clean

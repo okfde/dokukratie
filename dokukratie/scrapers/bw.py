@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 
 from furl import furl
 
+from .incremental import skip_incremental
 from .util import skip_while_testing
 
 
@@ -34,7 +35,7 @@ def parse(context, data):
 
     # parse listing, yield detail entries
     for detail_data in _parse(res.html.body, res.url):
-        if not context.skip_incremental(detail_data):
+        if not skip_incremental(context, detail_data):
             context.emit(rule="fetch", data={**data, **detail_data})
             if skip_while_testing(context, "yield_items"):
                 break
