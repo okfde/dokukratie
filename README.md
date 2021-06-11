@@ -36,18 +36,18 @@ have not seen before. To disable this behaviour, set
 
 German state parliaments:
 
-- [bw - Landtag von Baden-Württemberg](#bw)
-- [by - Bayerischer Landtag](#by)
-- [hh - Hamburgische Bürgerschaft](#hh)
-- [mv - Landtag Mecklenburg-Vorpommern](#mv)
-- [st - Landtag von Sachsen-Anhalt](#st)
-- [th - Thüringer Landtag](#th)
+- [![bw](https://github.com/okfde/dokukratie/actions/workflows/bw.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bw.yml) [bw - Landtag von Baden-Württemberg](#bw)
+- [![by](https://github.com/okfde/dokukratie/actions/workflows/by.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/by.yml) [by - Bayerischer Landtag](#by)
+- [![hh](https://github.com/okfde/dokukratie/actions/workflows/hh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hh.yml) [hh - Hamburgische Bürgerschaft](#hh)
+- [![mv](https://github.com/okfde/dokukratie/actions/workflows/mv.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/mv.yml) [mv - Landtag Mecklenburg-Vorpommern](#mv)
+- [![st](https://github.com/okfde/dokukratie/actions/workflows/st.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/st.yml) [st - Landtag von Sachsen-Anhalt](#st)
+- [![th](https://github.com/okfde/dokukratie/actions/workflows/th.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/th.yml) [th - Thüringer Landtag](#th)
 
 Other scrapers:
 
 - [dip - Dokumentations- und Informationssystem für Parlamentsmaterialien - API](#dip)
 - [parlamentsspiegel - Parlamentsspiegel (gemeinsames Informationssystem der Landesparlamente)](#parlamentsspiegel)
-- [sehrgutachten - Gutachten der Wissenschaftlichen Dienste](#sehrgutachten)
+- [![sehrgutachten](https://github.com/okfde/dokukratie/actions/workflows/sehrgutachten.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/sehrgutachten.yml) [sehrgutachten - Gutachten der Wissenschaftlichen Dienste](#sehrgutachten)
 - [vsberichte - Verfassungsschutzberichte des Bundes und der Länder](#vsberichte)
 
 

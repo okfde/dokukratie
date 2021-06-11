@@ -58,7 +58,6 @@ all: pull mmmeta push
 %.upload:
 	aws s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
-
 test:
 	rm -rf testdata
 	mkdir testdata
