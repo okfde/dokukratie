@@ -11,9 +11,10 @@ from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
+from .mmmeta import get_start_date
+from .util import re_first  # , skip_while_testing
 from .util import cast, ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
-from .util import re_first  # , skip_while_testing
 
 
 def init(context, data=None):
@@ -33,6 +34,9 @@ def init(context, data=None):
     dateformat = context.params.get("dateformat", "%Y-%m-%d")
     start_date = ensure_date(_geoc(context, "START_DATE"))
     end_date = ensure_date(_geoc(context, "END_DATE"))
+    if start_date is None:
+        start_date = ensure_date(get_start_date(context))
+
     if start_date is not None:
         start_date = start_date.strftime(dateformat)
     if end_date is not None:

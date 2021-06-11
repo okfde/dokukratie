@@ -12,8 +12,9 @@ setup(
     include_package_data=True,
     zip_safe=False,
     install_requires=[
+        "click<8.0.0",
         "memorious @ git+https://github.com/alephdata/memorious",  # FIXME
-        "mmmeta",
+        "mmmeta @ git+https://github.com/simonwoerpel/mmmeta@develop",
         "furl",
         "pyicu",
     ],
