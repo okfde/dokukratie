@@ -2,9 +2,13 @@ export MEMORIOUS_CONFIG_PATH=dokukratie
 
 # production use
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
+st: st.pull st.run_prod st.mmmeta st.upload
 
 sehrgutachten.run_prod:
 	START_DATE_DELTA=14 MMMETA=./data/store/sehrgutachten memorious run sehrgutachten --threads=4
+
+st.run_prod:
+	START_DATE_DELTA=7 MMMETA=./data/store/st memorious run st --threads=4
 
 run.%:
 	memorious run $*
@@ -23,6 +27,7 @@ install.test: install.dev
 
 # current available scrapers:
 config: bw.config by.config hh.config mv.config st.config th.config
+action: bw.action by.action hh.action mv.action st.action th.action
 mmmeta: bw.mmmeta by.mmmeta hh.mmmeta mv.mmmeta st.mmmeta th.mmmeta dip.mmmeta sehrgutachten.mmmeta parlamentsspiegel.mmmeta vsberichte.mmmeta
 pull: bw.pull by.pull hh.pull mv.pull st.pull th.pull dip.pull sehrgutachten.pull parlamentsspiegel.pull vsberichte.pull
 push: bw.push by.push hh.push mv.push st.push th.push dip.push sehrgutachten.push parlamentsspiegel.push vsberichte.push
@@ -34,6 +39,10 @@ all: pull mmmeta push
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
 	sed "s/<scraper_name>/$*/" config.yml.tmpl > ./data/store/$*/_mmmeta/config.yml
+
+%.action:
+	mkdir -p ./.github/workflows/
+	sed "s/<scraper_name>/$*/" workflow.yml.tmpl > ./.github/workflows/$*.yml
 
 %.mmmeta:
 	MMMETA=./data/store/$* mmmeta generate
