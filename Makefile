@@ -1,5 +1,11 @@
 export MEMORIOUS_CONFIG_PATH=dokukratie
 
+# production use
+sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
+
+sehrgutachten.run_prod:
+	START_DATE_DELTA=14 MMMETA=./data/store/sehrgutachten memorious run sehrgutachten --threads=4
+
 run.%:
 	memorious run $*
 
@@ -33,13 +39,13 @@ all: pull mmmeta push
 	MMMETA=./data/store/$* mmmeta generate
 
 %.pull:
-	rclone copy -P dokukratie:dokukratie-dev/$*/_mmmeta ./data/store/$*/_mmmeta
+	aws s3 sync s3://$(DATA_BUCKET)/$*/_mmmeta/db/ ./data/store/$*/_mmmeta/db
 
 %.push:
-	rclone copy -P ./data/store/$*/_mmmeta dokukratie:dokukratie-dev/$*/_mmmeta
+	aws s3 sync --exclude "*.db*" ./data/store/$*/_mmmeta/ s3://$(DATA_BUCKET)/$*/_mmmeta
 
 %.upload:
-	rclone copy -P ./data/store/$*/ dokukratie:dokukratie-dev/$*
+	aws s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
 
 test:
