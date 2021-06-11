@@ -1,0 +1,6 @@
+dokukratie.*
+data*
+testdata*
+.git*
+tests
+venv
