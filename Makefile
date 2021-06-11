@@ -4,15 +4,12 @@ export MEMORIOUS_CONFIG_PATH=dokukratie
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 st: st.pull st.run_prod st.mmmeta st.upload
 bw: bw.pull bw.run_prod bw.mmmeta bw.upload
+th: th.pull th.run_prod th.mmmeta th.upload
+mv: mv.pull mv.run_prod mv.mmmeta mv.upload
+hh: hh.pull hh.run_prod hh.mmmeta hh.upload
 
-sehrgutachten.run_prod:
-	START_DATE_DELTA=14 MMMETA=./data/store/sehrgutachten memorious run sehrgutachten --threads=4
-
-st.run_prod:
-	START_DATE_DELTA=14 MMMETA=./data/store/st memorious run st --threads=4
-
-bw.run_prod:
-	START_DATE_DELTA=14 MMMETA=./data/store/bw memorious run bw --threads=4
+%.run_prod:
+	START_DATE_DELTA=14 MMMETA=./data/store/$* memorious run $* --threads=4
 
 run.%:
 	memorious run $*
