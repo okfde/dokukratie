@@ -12,7 +12,10 @@ def get_start_date(context):
         m = mmmeta()
         m.update()
         try:
-            file = next(m.files.all(order_by="-published_at"))
+            query = m.files.all(order_by="-published_at")
+            file = next(query)
+            while file.get("published_at") is None:
+                file = next(query)
             # go a bit backwards
             delta = _geoc(context, "START_DATE_DELTA", 7)  # 1 week
             delta = int(delta)

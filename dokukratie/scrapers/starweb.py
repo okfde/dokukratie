@@ -70,9 +70,10 @@ class StarwebScraper(BaseScraper):
             parse_for_metadata(self.context, detail_data, item)
             detail_data["url"] = x(item, self.context.params["download_url"])
 
-            # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
-            if not skip_incremental(self.context, detail_data):
-                self.context.emit("download", data={**data, **detail_data})
+            if detail_data["url"]:
+                # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
+                if not skip_incremental(self.context, detail_data):
+                    self.context.emit("download", data={**data, **detail_data})
 
         # pagination
         next_page = self.context.params.get("next_page")
