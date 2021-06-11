@@ -7,7 +7,7 @@ from servicelayer.cache import make_key
 from .util import get_value_from_xp as x
 
 
-def skip_incremental(context, data):
+def skip_incremental(context, data, config=None):
     """
     a more advanced skip_incremental implementation
 
@@ -26,11 +26,14 @@ def skip_incremental(context, data):
             urlpattern: ...
         target:
             stage: store
+
+    (can also be passed in as dict for config parameter)
     """
-    if "skip_incremental" not in context.params:
+    if config is None and "skip_incremental" not in context.params:
         return False
 
-    get_key = ensure_dict(context.params["skip_incremental"].get("key"))
+    config = ensure_dict(config or context.params.get("skip_incremental"))
+    get_key = ensure_dict(config.get("key"))
     identifier = data.get(get_key.get("data", "reference"))
     if identifier is None:
         urlpattern = get_key.get("urlpattern")
@@ -46,7 +49,7 @@ def skip_incremental(context, data):
                 identifier = x(xpath, res.html)
 
     if identifier is not None:
-        target = context.params["skip_incremental"]["target"]
+        target = config.get("target", {"stage": "store"})  # FIXME
         target_key = make_key("skip_incremental", identifier, target["stage"])
         if context.check_tag(target_key):
             # we reached the target

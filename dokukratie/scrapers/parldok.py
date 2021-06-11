@@ -3,11 +3,14 @@ from urllib.parse import urljoin
 from memorious.operations.parse import parse_for_metadata
 
 from .base import BaseScraper
+from .incremental import skip_incremental
 from .util import get_value_from_xp as x
 from .util import re_first
 
 
 class ParldokScraper(BaseScraper):
+    skip_incremental_config = {"key": {"data": "url"}, "target": {"stage": "store"}}
+
     def emit_search(self, data):
         """
         do a post request to the search overview page for given
@@ -42,8 +45,8 @@ class ParldokScraper(BaseScraper):
                 url = re_first(r".*href='([\w\/\d]+)'.*", url)
             url = urljoin(self.base_url, url)
 
-            if not self.context.skip_incremental(url):
-                data["url"] = data["source_url"] = url
+            data["url"] = data["source_url"] = url
+            if not skip_incremental(self.context, data, self.skip_incremental_config):
                 parse_for_metadata(self.context, data, item)
                 self.context.emit("fetch", data=data)
                 if self.skip_while_testing("yield_items", 3):
