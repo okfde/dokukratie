@@ -60,6 +60,9 @@ pipeline:
     params:
       item: './/li[@name="RecordRepeater"]'
       download_url: './/div[@id="aside"]//a[@class="download"]/@href'
+      skip_incremental:
+        target:
+          stage: store
       next_page:
         xpath: './/div[@class="pagination-right"]/span[@name="NextRecsConditional"]'
         formdata:

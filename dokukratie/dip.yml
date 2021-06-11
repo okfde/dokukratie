@@ -37,6 +37,10 @@ pipeline:
 
   parse:
     method: dokukratie.scrapers.dip:parse
+    params:
+      skip_incremental:
+        target:
+          stage: store
     handle:
       cursor: fetch
       download: download

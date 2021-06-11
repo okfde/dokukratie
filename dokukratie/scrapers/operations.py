@@ -10,44 +10,11 @@ from memorious.operations.store import directory as memorious_store
 from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
-from .util import cast, ensure_date
-from .util import get_env_or_context as _geoc
-from .util import get_value_from_xp as x
+from .incremental import skip_incremental
+from .mmmeta import get_start_date
 from .util import re_first  # , skip_while_testing
-
-
-def _should_continue(context, data, html=None):
-    """
-    look for a unique value used for creating the keys for `skip_incremental`
-    either in data dictionary or in html via xpath
-
-    config params (optional):
-      skip_incremental:
-        data_key: key in data dict containing unique value (default: "reference")
-        xpath: xpath to get unique value from
-        urlpattern: regex to match data["url"] against to create inc keys
-    """
-    skip_incremental = ensure_dict(context.params.get("skip_incremental"))
-    data_key = skip_incremental.get("data_key", "reference")
-    xpath = skip_incremental.get("xpath")
-    urlpattern = skip_incremental.get("urlpattern")
-    identifier = data.get(data_key)
-
-    if identifier is None:
-        if urlpattern is not None:
-            url = data.get("url", "")
-            if re.match(urlpattern, url):
-                identifier = url
-
-    if identifier is None:
-        if xpath is not None and html is not None:
-            identifier = x(xpath, html)
-
-    if identifier is None:
-        return True
-
-    # if not skip_while_testing(context, "incremental_fetch", 5):  FIXME
-    return not context.skip_incremental(identifier)
+from .util import cast, ensure_date, flatten_dict
+from .util import get_env_or_context as _geoc
 
 
 def init(context, data=None):
@@ -67,6 +34,9 @@ def init(context, data=None):
     dateformat = context.params.get("dateformat", "%Y-%m-%d")
     start_date = ensure_date(_geoc(context, "START_DATE"))
     end_date = ensure_date(_geoc(context, "END_DATE"))
+    if start_date is None:
+        start_date = ensure_date(get_start_date(context))
+
     if start_date is not None:
         start_date = start_date.strftime(dateformat)
     if end_date is not None:
@@ -101,13 +71,13 @@ def parse(context, data):
     an extended parse to handle incremental scraping
     """
 
-    if _should_continue(context, data):
+    if not skip_incremental(context, data):
         with context.http.rehash(data) as result:
             if result.html is not None:
                 # Get extra metadata from the DOM
                 parse_for_metadata(context, data, result.html)
                 # maybe data is updated with unique identifier for incremental skip
-                if _should_continue(context, data, result.html):
+                if not skip_incremental(context, data):
                     parse_html(context, data, result)
 
             rules = context.params.get("store") or {"match_all": {}}
@@ -119,7 +89,7 @@ def fetch(context, data):
     """
     an extended fetch to be able to skip_incremental based on passed data dict
     """
-    if _should_continue(context, data):
+    if not skip_incremental(context, data):
         memorious_fetch(context, data)
 
 
@@ -206,9 +176,27 @@ def clean(context, data):
 
 def store(context, data):
     """
-    an extended store to be able to quit the scraper after first store during test run
+    an extended store to be able to set skip_incremental and quit the scraper
+    after first store during test run
     """
     memorious_store(context, data)
+    incremental = ensure_dict(data.get("skip_incremental"))
+    if incremental.get("target") == context.stage.name:
+        if incremental.get("key") is not None:
+            context.set_tag(incremental["key"], True)
     if env.to_bool("TESTING_MODE"):
         context.crawler.cancel()
         context.log.debug("Cancelling crawler run because of test mode.")
+
+
+def parse_json(context, data):
+    """
+    parse a json response and yield data dict based on config
+
+    key path are dot notation
+    """
+    res = context.http.rehash(data)
+    jsondata = clean_dict(flatten_dict(res.json))
+    for key, path in ensure_dict(context.params).items():
+        data[key] = jsondata[path]
+    context.emit(data=data)

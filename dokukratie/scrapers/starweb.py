@@ -2,6 +2,7 @@ from banal import ensure_dict
 from memorious.operations.parse import parse_for_metadata
 
 from .util import get_value_from_xp as x
+from .incremental import skip_incremental
 from .base import BaseScraper
 
 
@@ -70,7 +71,7 @@ class StarwebScraper(BaseScraper):
             detail_data["url"] = x(item, self.context.params["download_url"])
 
             # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
-            if not self.context.skip_incremental(detail_data):
+            if not skip_incremental(self.context, detail_data):
                 self.context.emit("download", data={**data, **detail_data})
 
         # pagination
