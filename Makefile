@@ -20,9 +20,10 @@ config: bw.config by.config hh.config mv.config st.config th.config
 mmmeta: bw.mmmeta by.mmmeta hh.mmmeta mv.mmmeta st.mmmeta th.mmmeta dip.mmmeta sehrgutachten.mmmeta parlamentsspiegel.mmmeta vsberichte.mmmeta
 pull: bw.pull by.pull hh.pull mv.pull st.pull th.pull dip.pull sehrgutachten.pull parlamentsspiegel.pull vsberichte.pull
 push: bw.push by.push hh.push mv.push st.push th.push dip.push sehrgutachten.push parlamentsspiegel.push vsberichte.push
+upload: bw.upload by.upload hh.upload mv.upload st.upload th.upload dip.upload sehrgutachten.upload parlamentsspiegel.upload vsberichte.upload
 
 # all the things
-sync: pull mmmeta push
+all: pull mmmeta push
 
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
@@ -30,14 +31,16 @@ sync: pull mmmeta push
 
 %.mmmeta:
 	MMMETA=./data/store/$* mmmeta generate
-	# FIXME cleanup
-	# rm -rf ./data/store/$*/_mmmeta/*db-*
 
 %.pull:
-	aws s3 sync --exclude "*db-shm" --exclude "*db-wal" s3://dokukratie-dev/$*/_mmmeta ./data/store/$*/_mmmeta
+	rclone copy -P dokukratie:dokukratie-dev/$*/_mmmeta ./data/store/$*/_mmmeta
 
 %.push:
-	aws s3 sync --exclude "*db-shm" --exclude "*db-wal" --exclude "state.db" ./data/store/$*/_mmmeta s3://dokukratie-dev/$*/_mmmeta
+	rclone copy -P ./data/store/$*/_mmmeta dokukratie:dokukratie-dev/$*/_mmmeta
+
+%.upload:
+	rclone copy -P ./data/store/$*/ dokukratie:dokukratie-dev/$*
+
 
 test:
 	rm -rf testdata
