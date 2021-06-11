@@ -1,0 +1,22 @@
+version: "3.2"
+
+services:
+  redis:
+    image: redis:alpine
+    command: ["redis-server", "--appendonly", "yes"]
+
+  shell:
+    build: .
+    command: /bin/bash
+    depends_on:
+      - redis
+    tmpfs:
+      - "/tmp"
+    environment:
+      ARCHIVE_TYPE: s3
+      MEMORIOUS_CONFIG_PATH: dokukratie
+      MEMORIOUS_EXPIRE: 30
+      MEMORIOUS_HTTP_TIMEOUT: 60
+      MEMORIOUS_CONTINUE_ON_ERROR: 1
+      REDIS_URL: redis://redis:6379/0
+
