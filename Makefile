@@ -7,6 +7,7 @@ bw: bw.pull bw.run_prod bw.mmmeta bw.upload
 th: th.pull th.run_prod th.mmmeta th.upload
 mv: mv.pull mv.run_prod mv.mmmeta mv.upload
 hh: hh.pull hh.run_prod hh.mmmeta hh.upload
+by: by.pull by.run_prod by.mmmeta by.upload
 
 %.run_prod:
 	START_DATE_DELTA=14 MMMETA=./data/store/$* memorious run $* --threads=4
