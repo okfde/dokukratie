@@ -322,6 +322,9 @@ leave columns starting with an underscore untouched.
 
 ### 4. Access file metadata within python applications
 
+soft delete files (not existing in the s3 bucket for some reason...) are 
+marked with `__deleted=1` and have a `__deleted_reason` property.
+
 ```python
 for file in m.files:
     # `file` has metadata as dictionary keys, e.g.:
