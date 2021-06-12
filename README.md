@@ -262,6 +262,82 @@ Used by:
 
 Code: [`./dokukratie/scrapers/parldok.py`](./dokukratie/scrapers/parldok.py)
 
+## mmmeta
+
+The scrapers generate a metadata database for [mmmeta](https://github.com/simonwoerpel/mmmeta) to consume.
+
+This is useful for client applications to track state of files without
+downloading the actual files, e.g. to know which files are already consumed and
+to only download newer ones, etc...
+
+How to use `mmmeta` for dokukratie:
+
+
+### 1. install
+
+Current used version: 0.4.0
+
+    pip install mmmeta
+
+### 2. Sync metadata and config:
+
+    aws s3 sync s3://<bucket_name>/<scraper_name>/_mmmeta ./data/<scraper_name>
+
+This will download the necessary metadata csv files (`./db/`) and `config.yml`
+
+### 3. Generate or update local state:
+
+Either use env var `MMMETA=./data/<scraper_name>` or jump into the base
+directory `./data/<scraper_name>` where the subdirectory `_mmmeta` exists.
+
+    mmmeta update
+
+or, within python applications:
+
+```python
+from mmmeta import mmmeta
+
+# init:
+m = mmmeta()  # env var MMMETA
+# OR
+m = mmmeta("./data/<scraper_name>")
+
+# update (or generate) local state
+m.update()
+```
+
+If this runs into sqlalchemy migration problems, there is an attempt to fix it
+(perhaps make a backup of the local `state.db` before):
+
+    mmmeta update --cleanup
+
+or, within python applications:
+
+```python
+m.update(cleanup=True)
+```
+
+This will cleanup data in the `state.db` according to `config.yml` but will
+leave columns starting with an underscore untouched.
+
+### 4. Access file metadata within python applications
+
+```python
+for file in m.files:
+    # `file` has metadata as dictionary keys, e.g.:
+    publisher = file["publisher"]
+    # ...
+
+    # s3 location:
+    file.remote.uri
+
+    # alter state data, e.g.:
+    # as a convention, local state data should start with _
+    # to not confuse it with the remote metadata
+    file["_foo"] = bar
+    file["_downloaded"] = True
+    file.save()
+```
 
 ## installation
 
