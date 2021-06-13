@@ -140,6 +140,8 @@ def clean(context, data):
                     "Can't extract metadata for `%s`: [%s] %s"
                     % (key, pattern.pattern, data[key])
                 )
+                data[f"{key}__unparsed"] = data[key]
+                data[key] = None
 
     # ensure document id metadata
     if "reference" in data:
