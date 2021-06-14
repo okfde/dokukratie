@@ -7,13 +7,14 @@ from memorious.helpers.rule import Rule
 from memorious.operations.fetch import fetch as memorious_fetch
 from memorious.operations.parse import parse_for_metadata, parse_html
 from memorious.operations.store import directory as memorious_store
+from mmmeta.util import casted_dict
 from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
 from .mmmeta import get_start_date
 from .util import re_first  # , skip_while_testing
-from .util import cast, ensure_date, flatten_dict
+from .util import ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
 
 
@@ -93,20 +94,22 @@ def fetch(context, data):
         memorious_fetch(context, data)
 
 
-def clean(context, data):
+DELETE_KEYS = ("page", "formdata")
+
+# don't apply typing here:
+UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
+
+# ensure lists
+LISTISH_KEYS = ("originators", "answerers")
+
+
+def clean(context, data, emit=True):
     """
     clean metadata and make sure it is as it is supposed to be
 
     optional parameters in yaml config:
         extractors: key, value dict for fields to extract their content via regex
     """
-    DELETE_KEYS = ("page", "formdata")
-
-    # don't apply typing here:
-    UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
-
-    # ensure lists
-    LISTISH_KEYS = ("originators", "answerers")
 
     if context is not None:
         # add some crawler metadata
@@ -119,10 +122,15 @@ def clean(context, data):
             doctype_keys = {
                 v: k for k, v in context.crawler.config["document_types"].items()
             }
-            data["document_type"] = doctype_keys[data["document_type"]]
+            data["document_type"] = doctype_keys.get(
+                data["document_type"], data["document_type"]
+            )
 
         # extract some extra data
-        for key, patterns in ensure_dict(context.get("extractors")).items():
+        for key, patterns in ensure_dict(context.params.get("extractors")).items():
+            if not isinstance(data.get(key), str):
+                # already parsed
+                continue
             value = None
             patterns = ensure_list(patterns)
             for pattern in patterns:
@@ -167,10 +175,10 @@ def clean(context, data):
     for key in LISTISH_KEYS:
         if key in data:
             data[key] = ensure_list(data[key])
-    data = {k: cast(v) if k not in UNCASTED_KEYS else v for k, v in data.items()}
+    data = casted_dict(data, ignore_keys=UNCASTED_KEYS)
 
     # emit to next stage or return
-    if context is not None:
+    if context is not None and emit:
         context.emit(data=data)
     else:
         return data
