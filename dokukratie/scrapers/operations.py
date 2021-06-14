@@ -102,6 +102,8 @@ UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
 # ensure lists
 LISTISH_KEYS = ("originators", "answerers")
 
+DATE_KEYS = ("published_at",)
+
 
 def clean(context, data, emit=True):
     """
@@ -151,6 +153,11 @@ def clean(context, data, emit=True):
                 data[f"{key}__unparsed"] = data[key]
                 data[key] = None
 
+        # clean some values
+        for key, values in ensure_dict(context.params.get("values")).items():
+            if data.get(key) in values:
+                data[key] = values[data[key]]
+
     # ensure document id metadata
     if "reference" in data:
         data["reference"] = re_first(r"\d{1,2}\/\d+", data["reference"])
@@ -175,6 +182,10 @@ def clean(context, data, emit=True):
     for key in LISTISH_KEYS:
         if key in data:
             data[key] = ensure_list(data[key])
+    parserkwargs = ensure_dict(context.params.get("dateparser"))
+    for key in DATE_KEYS:
+        if key in data:
+            data[key] = ensure_date(data[key], **parserkwargs)
     data = casted_dict(data, ignore_keys=UNCASTED_KEYS)
 
     # emit to next stage or return

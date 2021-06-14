@@ -5,9 +5,9 @@ from memorious.cli import get_crawler
 from memorious.logic.context import Context
 from memorious.operations.store import _get_directory_path
 from mmmeta.backend.filesystem import FilesystemBackend
+from mmmeta.util import casted_dict
 
 from .scrapers.operations import clean, UNCASTED_KEYS
-from .scrapers.util import casted_dict
 
 log = logging.getLogger(__name__)
 
