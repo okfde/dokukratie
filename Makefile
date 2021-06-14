@@ -2,6 +2,7 @@ export MEMORIOUS_CONFIG_PATH=dokukratie
 
 # production use
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
+parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
 st: st.pull st.run_prod st.mmmeta st.upload
 bw: bw.pull bw.run_prod bw.mmmeta bw.upload
 th: th.pull th.run_prod th.mmmeta th.upload
