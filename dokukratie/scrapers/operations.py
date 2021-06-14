@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from itertools import product
 
 from banal import clean_dict, ensure_dict, ensure_list
@@ -35,11 +36,15 @@ def init(context, data=None):
     dateformat = context.params.get("dateformat", "%Y-%m-%d")
     start_date = ensure_date(_geoc(context, "START_DATE"))
     end_date = ensure_date(_geoc(context, "END_DATE"))
+
+    # get from mmmeta
     if start_date is None:
         start_date = ensure_date(get_start_date(context))
 
     if start_date is not None:
         start_date = start_date.strftime(dateformat)
+        if end_date is None:
+            end_date = datetime.now().date()
     if end_date is not None:
         end_date = end_date.strftime(dateformat)
 
