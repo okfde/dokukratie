@@ -12,6 +12,7 @@ ni: ni.pull ni.run_prod ni.mmmeta ni.upload
 nw: nw.pull nw.run_prod nw.mmmeta nw.upload
 rp: rp.pull rp.run_prod rp.mmmeta rp.upload
 st: st.pull st.run_prod st.mmmeta st.upload
+
 th: th.pull th.run_prod th.mmmeta th.upload
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
@@ -19,8 +20,7 @@ dip: dip.pull dip.run_prod dip.mmmeta dip.upload
 
 he.run_prod:
 	# don't ddos hessen
-	MEMORIOUS_HTTP_RATE_LIMIT=30 START_DATE_DELTA=14 MMMETA=./data/store/he memorious run he --threads=4
-
+	MEMORIOUS_HTTP_RATE_LIMIT=30 START_DATE_DELTA=7 MMMETA=./data/store/he memorious run he --threads=4
 
 %.run_prod:
 	MMMETA=./data/store/$* memorious run $* --threads=4
