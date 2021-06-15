@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 
+from memorious import settings
 from mmmeta import mmmeta
 from servicelayer import env
 
@@ -8,6 +9,8 @@ from .util import get_env_or_context as _geoc
 
 
 def get_start_date(context):
+    if not settings.INCREMENTAL:
+        return
     if env.get("MMMETA"):
         m = mmmeta()
         m.update()
