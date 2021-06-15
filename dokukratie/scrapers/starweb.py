@@ -1,12 +1,21 @@
+from urllib.parse import urljoin
+
 from banal import ensure_dict
+from furl import furl
 from memorious.operations.parse import parse_for_metadata
 
-from .util import get_value_from_xp as x
-from .incremental import skip_incremental
 from .base import BaseScraper
+from .incremental import skip_incremental
+from .util import get_value_from_xp as x
+from .util import re_first
 
 
 class StarwebScraper(BaseScraper):
+    skip_incremental_config = {
+        "key": {"data": "url"},
+        "target": {"stage": "store"},
+    }
+
     def get_formdata(self, html, form_xp='.//form[@name="__form"]'):
         """
         return action, data
@@ -64,16 +73,30 @@ class StarwebScraper(BaseScraper):
         """
 
         res = self.context.http.rehash(data)
-
         for item in res.html.xpath(self.context.params["item"]):
             detail_data = {}
             parse_for_metadata(self.context, detail_data, item)
-            detail_data["url"] = x(item, self.context.params["download_url"])
 
-            if detail_data["url"]:
+            if self.version == "5.9.1":  # WTF
+                params = x(item, self.context.params["detail_params"])
+                params = re_first(r"(WP=\d{1,2}\sAND\sR=\d+)", params)
+                url = (
+                    furl(self.context.params["detail_url"]).add({"search": params}).url
+                )
+            else:
+                url = x(item, self.context.params["download_url"])
+                data["source_url"] = url
+
+            if url:
+                if not url.startswith("http"):
+                    url = urljoin(data["url"], f"/{url}")
+                detail_data["url"] = url
+
                 # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
-                if not skip_incremental(self.context, detail_data):
-                    self.context.emit("download", data={**data, **detail_data})
+                if not skip_incremental(
+                    self.context, detail_data, self.skip_incremental_config
+                ):
+                    self.context.emit(data={**data, **detail_data})
 
         # pagination
         next_page = self.context.params.get("next_page")

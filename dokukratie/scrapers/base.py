@@ -1,7 +1,7 @@
 from packaging.version import parse as versionparse
 
+from .incremental import skip_while_testing as _skip_while_testing
 from .operations import init
-from .util import skip_while_testing as _skip_while_testing
 
 
 class Version:

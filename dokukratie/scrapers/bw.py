@@ -3,8 +3,7 @@ from urllib.parse import urljoin
 
 from furl import furl
 
-from .incremental import skip_incremental
-from .util import skip_while_testing
+from .incremental import skip_incremental, skip_while_testing
 
 
 def _parse(body, base_url):
@@ -44,4 +43,4 @@ def parse(context, data):
     fu = furl(res.url)
     offset = int(fu.args.get("offset", 0))
     fu.args["offset"] = offset + int(fu.args.get("limit", 10))
-    context.emit(rule="fetch", data={"url": fu.url})
+    context.emit(rule="fetch", data={**data, **{"url": fu.url}})

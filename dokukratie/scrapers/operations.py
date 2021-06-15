@@ -9,14 +9,13 @@ from memorious.operations.fetch import fetch as memorious_fetch
 from memorious.operations.parse import parse_for_metadata, parse_html
 from memorious.operations.store import directory as memorious_store
 from mmmeta.util import casted_dict
-from servicelayer import env
 
 from .exceptions import MetaDataError, RegexError
-from .incremental import skip_incremental
+from .incremental import skip_incremental, skip_while_testing
 from .mmmeta import get_start_date
-from .util import re_first  # , skip_while_testing
 from .util import ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
+from .util import re_first
 
 
 def init(context, data=None):
@@ -78,13 +77,19 @@ def parse(context, data):
     """
 
     if not skip_incremental(context, data):
+        # track recursion
+        data["parse_recursion"] = data.get("parse_recursion", -1) + 1
+        context.log.debug(f"Parse recursion: {data['parse_recursion']}")
         with context.http.rehash(data) as result:
             if result.html is not None:
                 # Get extra metadata from the DOM
                 parse_for_metadata(context, data, result.html)
                 # maybe data is updated with unique identifier for incremental skip
                 if not skip_incremental(context, data):
-                    parse_html(context, data, result)
+                    if not skip_while_testing(
+                        context, f"parse_{data['parse_recursion']}", 3
+                    ):
+                        parse_html(context, data, result)
 
             rules = context.params.get("store") or {"match_all": {}}
             if Rule.get_rule(rules).apply(result):
@@ -94,9 +99,14 @@ def parse(context, data):
 def fetch(context, data):
     """
     an extended fetch to be able to skip_incremental based on passed data dict
+    and reduce fetches while testing
     """
     if not skip_incremental(context, data):
-        memorious_fetch(context, data)
+        # track recursion
+        data["fetch_recursion"] = data.get("fetch_recursion", -1) + 1
+        context.log.debug(f"Fetch recursion: {data['fetch_recursion']}")
+        if not skip_while_testing(context, f"fetch_{data['fetch_recursion']}", 3):
+            memorious_fetch(context, data)
 
 
 DELETE_KEYS = ("page", "formdata")
@@ -135,9 +145,14 @@ def clean(context, data, emit=True):
 
         # extract some extra data
         for key, patterns in ensure_dict(context.params.get("extractors")).items():
+            if key not in data:
+                continue
             if not isinstance(data.get(key), str):
                 # already parsed
                 continue
+
+            # save original for further re-parsing
+            data[f"{key}__unparsed"] = data[key]
             value = None
             patterns = ensure_list(patterns)
             for pattern in patterns:
@@ -155,7 +170,6 @@ def clean(context, data, emit=True):
                     "Can't extract metadata for `%s`: [%s] %s"
                     % (key, pattern.pattern, data[key])
                 )
-                data[f"{key}__unparsed"] = data[key]
                 data[key] = None
 
         # clean some values
@@ -210,7 +224,7 @@ def store(context, data):
     if incremental.get("target") == context.stage.name:
         if incremental.get("key") is not None:
             context.set_tag(incremental["key"], True)
-    if env.to_bool("TESTING_MODE"):
+    if skip_while_testing(context, "store", 1):
         context.crawler.cancel()
         context.log.debug("Cancelling crawler run because of test mode.")
 

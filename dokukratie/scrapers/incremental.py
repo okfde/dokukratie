@@ -2,6 +2,7 @@ import re
 
 from banal import ensure_dict
 from memorious import settings
+from servicelayer import env
 from servicelayer.cache import make_key
 
 from .util import get_value_from_xp as x
@@ -59,3 +60,21 @@ def skip_incremental(context, data, config=None):
 
         # set key regardless of INCREMENTAL setting for next run
         data["skip_incremental"] = {"target": target["stage"], "key": target_key}
+
+
+def skip_while_testing(context, key=None, counter=-1):
+    # try to speed up tests...
+    if not env.to_bool("TESTING_MODE"):
+        return False
+
+    key = make_key(
+        "skip_while_testing", context.crawler, context.stage, context.run_id, key
+    )
+    tag = context.get_tag(key)
+    if tag is None:
+        context.set_tag(key, 0)
+        return False
+    if tag > counter:
+        context.log.debug("Skipping: %s" % key)
+        return True
+    context.set_tag(key, tag + 1)

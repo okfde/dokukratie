@@ -1,8 +1,7 @@
 from banal import ensure_list, is_mapping
 from furl import furl
 
-from .incremental import skip_incremental
-from .util import skip_while_testing
+from .incremental import skip_incremental, skip_while_testing
 
 
 def _test(data, key, value):
