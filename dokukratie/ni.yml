@@ -1,15 +1,23 @@
-name: dokukratie_ni
-description: Kleine Anfragen Niedersachsen
+name: ni
+description: Niedersächsisches Landtagsdokumentationssystem
 state: ni
+
+publisher:
+  type: parliament
+  name: Landtag Niedersachsen
+  url: https://www.landtag-niedersachsen.de/
+  jurisdiction:
+    id: ni
+    name: Niedersachsen
 
 scraper:
   name: starweb
   version: 6.0.01
-  url: "https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/lissh.web"
+  url: https://www.nilas.niedersachsen.de/starweb/NILAS/start.html
 
 document_types:
-  major: "Große Anfrage Mit Antwort"
-  minor: "Kleine Anfrage Zur Schriftlichen Beantwortung Mit Antwort"
+  major_interpellation: Große Anfrage Mit Antwort
+  minor_interpellation: Kleine Anfrage Zur Schriftlichen Beantwortung Mit Antwort
 
 pipeline:
 
@@ -17,7 +25,17 @@ pipeline:
     method: dokukratie.scrapers.starweb:init
     params:
       legislative_terms: 18
-      document_types: minor
+      document_types:
+        - minor_interpellation
+        # - major_interpellation
+      url: https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/lissh.web
+      dateformat: "%d.%m.%Y"
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: fetch
     handle:
       pass: search
 
@@ -27,11 +45,24 @@ pipeline:
       fields:
         legislative_term: wplist
         document_type: Suchzeile6
+        start_date: Suchzeile7
+        end_date: Suchzeile8
       formdata:
         __action: 5
         Suchzeile5: DRUCKSACHE
-        # maxtrefferlist1: "S99{ITEMS+-1:-1000000}"
+        # maxtrefferlist1: S32{ITEMS+1:100000000}
         # ReportFormatListDisplay: Vollanzeige
+    handle:
+      pass: full_view
+
+
+  # post form to full view
+  full_view:
+    method: dokukratie.scrapers.starweb:post
+    params:
+      formdata:
+        __action: 28
+        ReportFormatListDisplay: Vorgaenge
     handle:
       pass: parse_results
 
@@ -39,36 +70,35 @@ pipeline:
     method: dokukratie.scrapers.starweb:parse_results
     params:
       item: './/table[@id="listTable"]//ul[@class="fundstelle"]/..'
-      download_url: './/ul[@class="fundstelle"]/li[matches(text(), "^Antwort\s.*")]/a/@href'
+      download_url: './/ul[@class="fundstelle"]/li[contains(text(), "Drucksache")][last()]/a/@href'
+      meta:
+        title: ".//b/text()"
+        summary: ".//b/../following-sibling::p[1]/text()"
+        reference: './/ul[@class="fundstelle"]/li[contains(text(), "Drucksache")][last()]/a'
+        keywords: './/a[@name="ThesaurusLink"]'
+        published_at: './/ul[@class="fundstelle"]/li[contains(text(), "Drucksache")][last()]'
+        answerers: './/ul[@class="fundstelle"]/li[contains(text(), "Drucksache")][last()]'
+        originators: './/ul[@class="fundstelle"]/li[contains(text(), "Drucksache")][1]'
     handle:
       next_page: search
-      download: download
+      pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
-      pass: parse
-
-  parse:
-    method: parse
-    params:
-      store:
-        mime_group: documents
-    handle:
-      store: clean
+      pass: clean
 
   clean:
-    method: dokukratie.util:clean
+    method: dokukratie.scrapers.operations:clean
     params:
       extractors:
-        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
         published_at: \d{2}\.\d{2}\.\d{4}
-        originators: .*Antwort\s+(.*)\sund\sAntwort.*
-        answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+        # originators: .*Antwort\s+(.*)\sund\sAntwort.*
+        # answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 
   store:
-    method: directory
-    params:
-      path: data
+    method: dokukratie.scrapers.operations:store

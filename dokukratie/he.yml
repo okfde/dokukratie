@@ -1,0 +1,103 @@
+name: he
+description: Parlamentsdatenbank Hessen
+
+publisher:
+  type: parliament
+  name: Hessischer Landtag
+  url: https://hessischer-landtag.de/
+  jurisdiction:
+    id: he
+    name: Hessen
+
+scraper:
+  name: starweb
+  version: 5.9.1
+  url: http://starweb.hessen.de/starweb/LIS/servlet.starweb
+
+document_types:
+  major_interpellation: GROßE ANFRAGE
+  minor_interpellation: KLEINE ANFRAGE
+
+pipeline:
+
+  init:
+    method: dokukratie.scrapers.starweb:init
+    params:
+      legislative_terms: WP20
+      document_types:
+        - minor_interpellation
+        # - major_interpellation
+      url: http://starweb.hessen.de/starweb/LIS/servlet.starweb?path=LIS/PdPi.web
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: fetch
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.starweb:search
+    params:
+      fields:
+        legislative_term: WPDatabase
+        document_type: dokumenttyp
+        start_date: zeitraum_von
+        end_date: zeitraum_bis
+      formdata:
+        __action: 69
+        status: X  # erledigt
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/tbody[@starweb_type="Record Repeater"]'
+      detail_url: http://starweb.hessen.de/starweb/LIS/servlet.starweb?path=LIS/PdPi_FLMore20.web
+      detail_params: './/span[@name="OFR_Betreff"]/a/@onclick'
+      next_page:
+        xpath: './/span[@name="NextRecsConditional"]'
+        formdata:
+          __action: 262
+      meta:
+        title: './/span[@name="OFR_Betreff"]'
+        reference:  './/span[@name="OFR_Drs"]'
+        originators: './/span[@name="OFR_Initiator"]'
+    handle:
+      next_page: search
+      pass: fetch_detail
+
+  fetch_detail:
+    method: dokukratie.scrapers.operations:fetch
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+          - './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")][last()]/following-sibling::a[1]'  # link to pdf download page
+          - './/a[contains(text(), "Originaldokument als PDF-Datei")]'  # actual link to pdf
+      meta:
+        published_at: './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")]'
+    handle:
+      fetch: fetch_detail
+      store: clean
+
+  # extract & cleanup metadata
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \s?(\d{2}\.\d{2}\.\d{4})\sDrucksache.*
+      dateparser:
+        dayfirst: true
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

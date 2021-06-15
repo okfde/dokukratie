@@ -1,17 +1,29 @@
 export MEMORIOUS_CONFIG_PATH=dokukratie
 
-# production use
+# production use: `make <crawler>`
+# current available scrapers:
+bb: bb.pull bb.run_prod bb.mmmeta bb.upload
+bw: bw.pull bw.run_prod bw.mmmeta bw.upload
+by: by.pull by.run_prod by.mmmeta by.upload
+hh: hh.pull hh.run_prod hh.mmmeta hh.upload
+he: he.pull he.run_prod he.mmmeta he.upload
+mv: mv.pull mv.run_prod mv.mmmeta mv.upload
+ni: ni.pull ni.run_prod ni.mmmeta ni.upload
+nw: nw.pull nw.run_prod nw.mmmeta nw.upload
+rp: rp.pull rp.run_prod rp.mmmeta rp.upload
+st: st.pull st.run_prod st.mmmeta st.upload
+th: th.pull th.run_prod th.mmmeta th.upload
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
-st: st.pull st.run_prod st.mmmeta st.upload
-bw: bw.pull bw.run_prod bw.mmmeta bw.upload
-th: th.pull th.run_prod th.mmmeta th.upload
-mv: mv.pull mv.run_prod mv.mmmeta mv.upload
-hh: hh.pull hh.run_prod hh.mmmeta hh.upload
-by: by.pull by.run_prod by.mmmeta by.upload
+dip: dip.pull dip.run_prod dip.mmmeta dip.upload
+
+he.run_prod:
+	# don't ddos hessen
+	MEMORIOUS_HTTP_RATE_LIMIT=30 START_DATE_DELTA=14 MMMETA=./data/store/he memorious run he --threads=4
+
 
 %.run_prod:
-	START_DATE_DELTA=14 MMMETA=./data/store/$* memorious run $* --threads=4
+	MMMETA=./data/store/$* memorious run $* --threads=4
 
 run.%:
 	memorious run $*
@@ -27,17 +39,6 @@ install.prod: install
 
 install.test: install.dev
 	pip install twine coverage nose moto pytest pytest-cov black flake8 isort
-
-# current available scrapers:
-config: bw.config by.config hh.config mv.config st.config th.config
-action: bw.action by.action hh.action mv.action st.action th.action
-mmmeta: bw.mmmeta by.mmmeta hh.mmmeta mv.mmmeta st.mmmeta th.mmmeta dip.mmmeta sehrgutachten.mmmeta parlamentsspiegel.mmmeta vsberichte.mmmeta
-pull: bw.pull by.pull hh.pull mv.pull st.pull th.pull dip.pull sehrgutachten.pull parlamentsspiegel.pull vsberichte.pull
-push: bw.push by.push hh.push mv.push st.push th.push dip.push sehrgutachten.push parlamentsspiegel.push vsberichte.push
-upload: bw.upload by.upload hh.upload mv.upload st.upload th.upload dip.upload sehrgutachten.upload parlamentsspiegel.upload vsberichte.upload
-
-# all the things
-all: pull mmmeta push
 
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
@@ -65,18 +66,12 @@ test:
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/
 	rm -rf testdata
 
-test.states: test.bw test.by test.hh test.mv test.st test.th
-
-test.parldok: test.hh test.mv test.th
-
-test.starweb: test.st
 
 test.%:
-	rm -rf testdata
-	mkdir testdata
+	rm -rf testdata/$*
+	mkdir -p testdata/$*
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/ -k "test_$*"
-	rm -rf testdata
-
+	rm -rf testdata/$*
 
 clean:
 	rm -fr build/

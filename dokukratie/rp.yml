@@ -1,25 +1,39 @@
-name: dokukratie_rp
-description: Kleine Anfragen Rheinland-Pfalz
-state: rp
+name: rp
+description: OPAL Rheinland-Pfalz
+
+publisher:
+  type: parliament
+  name: Landtag Rheinland-Pfalz
+  url: https://www.landtag.rlp.de
+  jurisdiction:
+    id: rp
+    name: Rheinland-Pfalz
 
 scraper:
   name: starweb
   version: 6.0.01
-  url: "https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web"
+  url: https://opal.rlp.de/starweb/OPAL_extern/index.htm
 
 document_types:
-  major: "GROßE ANFRAGE; ANTWORT"
-  minor: "KLEINE ANFRAGE UND ANTWORT; ANTWORT"
+  major_interpellation: GROßE ANFRAGE
+  minor_interpellation: KLEINE ANFRAGE UND ANTWORT; ANTWORT
 
 pipeline:
 
   init:
     method: dokukratie.scrapers.starweb:init
     params:
-      legislative_terms: 7
+      legislative_terms: 18
       document_types:
-        - minor
-        # - major
+        - minor_interpellation
+        # - major_interpellation
+      url: https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: fetch
     handle:
       pass: search
 
@@ -27,13 +41,13 @@ pipeline:
     method: dokukratie.scrapers.starweb:search
     params:
       fields:
-        legislative_term: 02_LISSH_WP
-        document_type: 05_LISSH_DTYP
+        legislative_term: 02_PDOKU_WP
+        document_type: 05_PDOKU_DTYP
       formdata:
-        __action: 27
-        03_LISSH_DART: "DRUCKSACHE"
-        NumPerSegment: 100
-
+        __action: 21
+        03_PDOKU_DART: D
+        18_PDOKU_Anfrage: DBESUP="DTYPF=ANTWORT"  # only with answers
+        # LimitMaximumHitCount: S99{ITEMS+1:10000000}
     handle:
       pass: parse_results
 
@@ -41,48 +55,41 @@ pipeline:
     method: dokukratie.scrapers.starweb:parse_results
     params:
       item: './/tbody[@name="RecordRepeater"]'
-      download_url: './/div[@id="aside"]//a[@class="download"]/@href'
+      download_url: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]//a[@title="Gesamtdokument"]/@href'
       next_page:
-        xpath: './/div[@class="pagination-right"]/span[@name="NextRecsConditional"]'
+        xpath: './/div[@id="seitenzahl"]//span[@name="NextRecsConditional"]'
         formdata:
-          __action: 64
+          __action: 52
       meta:
-        title:
-          -
-        keywords: './/div[@class="topic"]/strong/a'
-        reference: './/div[@class="topic"]/p[@class="info"]'
-        originators: './/div[@class="topic"]/p[@class="info"]'
-        answerers: './/div[@class="topic"]/p[@class="info"]'
-        published_at: './/div[@class="topic"]/p[@class="info"]'
+        # reference, originators, etc..: store the full paragraph for each field,
+        # extract the granular information later in `clean` stage
+        title: './/tr[@name="Repeat_WHET"]/td/b'
+        keywords: './/a[@name="ThesaurusLink"]/text()'
+        reference:  './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
+        originators: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
+        answerers: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
+        published_at: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
     handle:
       next_page: search
-      download: download
+      pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
-      pass: parse
+      pass: clean
 
-  parse:
-    method: parse
-    params:
-      store:
-        mime_group: documents
-    handle:
-      store: clean
-
+  # extract & cleanup metadata
   clean:
-    method: dokukratie.util:clean
+    method: dokukratie.scrapers.operations:clean
     params:
       extractors:
-        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
         published_at: \d{2}\.\d{2}\.\d{4}
-        originators: .*Antwort\s+(.*)\sund\sAntwort.*
-        answerers: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+        originators: Kleine\s+Anfrage\s+[\d\s]+(.+?)\s+und
+        answerers: .*\s+und\s+Antwort\s+(.+?)\s
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 
   store:
-    method: directory
-    params:
-      path: data
+    method: dokukratie.scrapers.operations:store

@@ -49,12 +49,13 @@ pipeline:
       meta:
         # on detail page
         title: ".//table/tr[2]/td[2]/text()[1]"
-        reference: ".//table/tr[3]/td[2]/text()"
-        published_at: ".//table/tr[3]/td[2]/text()"
-        state: ".//table/tr[3]/td[2]/text()"
+        reference: '(.//table/tr/td[contains(text(), "Drucksache")])[last()]/text()'
+        published_at: '(.//table/tr/td[contains(text(), "Drucksache")])[last()]/text()'
+        state: '(.//table/tr/td[contains(text(), "Drucksache")])[1]/text()'
         meta_info: ".//table/tr[3]/td[2]/text()"
         source_url: './/a[contains(text(),"Kurzansicht")]/@href'
         summary: ".//table/tr[2]/td[2]"
+        document_type: '(.//table/tr/td[contains(text(), "Anfrage")])[1]/text()'
     handle:
       fetch: fetch
       store: clean
@@ -65,6 +66,7 @@ pipeline:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
         state: ([\w-]+)\s?
+        document_type: .[\w-]+\s?-?([\w\s]+)
       values:
         state:
           "Bayerischer": by

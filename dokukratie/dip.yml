@@ -58,7 +58,7 @@ pipeline:
       pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: clean
 

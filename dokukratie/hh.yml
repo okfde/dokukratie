@@ -4,7 +4,7 @@ description: Parlamentsdokumentation Hamburgische Bürgerschaft
 publisher:
   type: parliament
   name: Hamburgische Bürgerschaft
-  url: https://www.buergerschaft-hh.de/parldok/formalkriterien
+  url: https://www.buergerschaft-hh.de
   jurisdiction:
     id: hh
     name: Hamburg
@@ -24,8 +24,9 @@ pipeline:
     params:
       legislative_terms: 22
       document_types:
-        - major_interpellation
         - minor_interpellation
+        # - major_interpellation
+      dateformat: "%d.%m.%Y"
     handle:
       pass: search
 
@@ -35,7 +36,7 @@ pipeline:
       pass: parse_results
 
   fetch_results:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_results
 
@@ -54,12 +55,12 @@ pipeline:
       fetch: fetch_detail
 
   fetch_detail:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_detail
 
   parse_detail:
-    method: parse
+    method: dokukratie.scrapers.operations:parse
     params:
       store:
         mime_group: documents
@@ -78,6 +79,8 @@ pipeline:
     params:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 

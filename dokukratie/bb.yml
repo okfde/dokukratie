@@ -1,14 +1,21 @@
-name: dokukratie_bb
-description: Kleine Anfragen Brandenburg
-state: bb
+name: bb
+description: Parlamentsdokumentation Brandenburg
+
+publisher:
+  type: parliament
+  name: Landtag Brandenburg
+  url: https://www.brandenburg.de/
+  jurisdiction:
+    id: bb
+    name: Brandenburg
 
 scraper:
   name: starweb
   version: 6.0.0
-  url: https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/index.html
+  url: https://www.parlamentsdokumentation.brandenburg.de
 
 document_types:
-  generic: "ANTWORT"
+  generic: ANTWORT
 
 pipeline:
 
@@ -19,6 +26,7 @@ pipeline:
       legislative_terms: 7
       document_types: generic
       url: https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/servlet.starweb?path=LBB/ELVIS/LISSH.web&AdvancedSearch=yes
+      dateformat: "%d.%m.%Y"
     handle:
       pass: fetch
 
@@ -44,37 +52,54 @@ pipeline:
       fields:
         legislative_term: LISSH_WP_ADV
         document_type: LISSH_DTYP
+        start_date: LISSH_DatumV
+        end_date: LISSH_DatumB
       formdata:
         __action: 85
         LISSH_DART_ADV: DRUCKSACHE
-        LimitMaximumHitCount: "S99{ITEMS+-1:-10000}"
+        LimitMaximumHitCount: "S99{ITEMS -1:-100000}"
     handle:
       pass: parse_results
 
   parse_results:
     method: dokukratie.scrapers.starweb:parse_results
+    params:
+      item: './/div[@name="RecordRepeater"]'
+      download_url: './div[@name="Repeat_DBE"]/div[@class="asideD noprint"]//a[@title="Gesamtdokument"]/@href'
+      next_page:
+        xpath: './/div[@id="seitenzahl"]//span[@name="NextRecsConditional"]'
+        formdata:
+          __action: 197
+      meta:
+        # reference, originators, etc..: store the full paragraph for each field,
+        # extract the granular information later in `clean` stage
+        title: './div[@name="Repeat_TYP"]/div[@class="topic"]/h4'
+        keywords: './div[@name="Repeat_TYP"]/div[@class="topic"]/a'
+        reference: './div[@name="Repeat_DBE"]/div[@class="topic2"]'
+        originators: './div[@name="Repeat_TYP"]/div[@class="topic2"]/span[2]'
+        answerers: './div[@name="Repeat_DBE"]/div[@class="topic2"]'
+        published_at: './div[@name="Repeat_DBE"]/div[@class="topic2"]'
     handle:
       next_page: search  # resend search post form with next page
-      download: download  # yield pdf urls and detail metadata
+      pass: download  # yield pdf urls and detail metadata
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: clean
 
   # extract & cleanup metadata
   clean:
-    method: dokukratie.scrapers.util:clean
+    method: dokukratie.scrapers.operations:clean
     params:
       extractors:
-        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
         published_at: \d{2}\.\d{2}\.\d{4}
-        originators: .*Antwort\s+(.*)\sund\sAntwort.*
-        answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
+        originators: ([\w\s(),]+)(?=\s\d)
+        answerers: Antwort\s\((\w+)\)
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 
   store:
-    method: directory
-    params:
-      path: data
+    method: dokukratie.scrapers.operations:store
