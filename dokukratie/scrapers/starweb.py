@@ -21,6 +21,10 @@ class StarwebScraper(BaseScraper):
         return action, data
         """
         form = html.find(form_xp)
+        if form is None:
+            self.context.log.error(f"Cannot find form: `{form_xp}`")
+            self.context.crawler.cancel()
+        return None, None
         return x(form, "@action"), {
             **{i.name: i.value for i in form.findall(".//input")},
             **{i.name: i.value for i in form.findall(".//select")},
@@ -39,25 +43,29 @@ class StarwebScraper(BaseScraper):
         res = self.context.http.rehash(data)
         form_url, formdata = self.get_formdata(res.html)
 
-        if "formdata" in data:
-            # update formdata from previous stage if recursive during paginating
-            formdata.update(data["formdata"])
-        else:
-            # or initialize for first search:
-            # fill in legislative term / document type and dates into the right fields
-            for key, field in ensure_dict(self.context.params.get("fields")).items():
-                if key in data:
-                    formdata[field] = data[key]
+        if form_url is not None and formdata is not None:
+            if "formdata" in data:
+                # update formdata from previous stage if recursive during paginating
+                formdata.update(data["formdata"])
+            else:
+                # or initialize for first search:
+                # fill in legislative term / document type and dates
+                # into the right fields
+                for key, field in ensure_dict(
+                    self.context.params.get("fields")
+                ).items():
+                    if key in data:
+                        formdata[field] = data[key]
 
-            # add initial formdata for search
-            for field, value in ensure_dict(
-                self.context.params.get("formdata")
-            ).items():
-                formdata[field] = value
+                # add initial formdata for search
+                for field, value in ensure_dict(
+                    self.context.params.get("formdata")
+                ).items():
+                    formdata[field] = value
 
-        # do the post search and emit to next stage
-        res = self.context.http.post(form_url, data=formdata)
-        self.context.emit(data={**data, **res.serialize()})
+            # do the post search and emit to next stage
+            res = self.context.http.post(form_url, data=formdata)
+            self.context.emit(data={**data, **res.serialize()})
 
     def emit_parse_results(self, data):
         """
@@ -117,9 +125,10 @@ class StarwebScraper(BaseScraper):
 
         res = self.context.http.rehash(data)
         form_url, formdata = self.get_formdata(res.html)
-        formdata.update(ensure_dict(self.context.params.get("formdata")))
-        res = self.context.http.post(form_url, data=formdata)
-        self.context.emit(data={**data, **res.serialize()})
+        if form_url is not None and formdata is not None:
+            formdata.update(ensure_dict(self.context.params.get("formdata")))
+            res = self.context.http.post(form_url, data=formdata)
+            self.context.emit(data={**data, **res.serialize()})
 
 
 # actual stages for pipeline
