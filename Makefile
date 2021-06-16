@@ -3,6 +3,7 @@ export MEMORIOUS_USER_AGENT="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) G
 
 # production use: `make <crawler>`
 # current available scrapers:
+# state scrapers
 bb: bb.pull bb.run_prod bb.mmmeta bb.upload
 bw: bw.pull bw.run_prod bw.mmmeta bw.upload
 by: by.pull by.run_prod by.mmmeta by.upload
@@ -15,9 +16,12 @@ rp: rp.pull rp.run_prod rp.mmmeta rp.upload
 st: st.pull st.run_prod st.mmmeta st.upload
 
 th: th.pull th.run_prod th.mmmeta th.upload
-sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
-parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
+
+# other scrapers
 dip: dip.pull dip.run_prod dip.mmmeta dip.upload
+parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
+sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
+vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
 
 he.run_prod:
 	# don't ddos hessen
@@ -26,6 +30,11 @@ he.run_prod:
 parlamentsspiegel.run_prod:
 	# don't go back too far
 	START_DATE_DELTA=2 MMMETA=./data/store/parlamentsspiegel memorious run parlamentsspiegel --threads=4
+
+vsberichte.run_prod:
+	# don't use mmmeta
+	memorious run vsberichte --threads=4
+
 
 %.run_prod:
 	MMMETA=./data/store/$* memorious run $* --threads=4
