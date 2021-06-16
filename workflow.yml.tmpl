@@ -70,9 +70,11 @@ jobs:
         run: |
           make <scraper_name>.run_prod
       - name: Generate mmmeta
+        if: always()
         run: |
           make <scraper_name>.mmmeta
       - name: Upload data
+        if: always()
         env:
           DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
