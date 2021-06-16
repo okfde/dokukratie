@@ -4,7 +4,7 @@ description: Parlamentsdokumentation Bayerischer Landtag
 publisher:
   type: parliament
   name: Bayerischer Landtag
-  url: https://www.bayern.landtag.de/parlament/dokumente/drucksachen
+  url: https://www.bayern.landtag.de
   jurisdiction:
     id: by
     name: Bayern
@@ -33,9 +33,6 @@ pipeline:
 
   fetch:
     method: dokukratie.scrapers.operations:fetch
-    params:
-      skip_incremental:
-        urlpattern: .*vorgangsanzeige.*
     handle:
       pass: parse
 
@@ -62,6 +59,8 @@ pipeline:
     params:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 

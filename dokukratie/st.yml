@@ -4,7 +4,7 @@ description: Parlamentsdokumentation Sachsen-Anhalt
 publisher:
   type: parliament
   name: Landtag von Sachsen-Anhalt
-  url: https://padoka.landtag.sachsen-anhalt.de/starweb/PADOKA/index.htm
+  url: https://landtag.sachsen-anhalt.de
   jurisdiction:
     id: st
     name: Sachsen-Anhalt
@@ -12,7 +12,7 @@ publisher:
 scraper:
   name: starweb
   version: 6.0.01
-  url: https://padoka.landtag.sachsen-anhalt.de
+  url: https://padoka.landtag.sachsen-anhalt.de/starweb/PADOKA/index.htm
 
 document_types:
   major_interpellation: "GROßE ANFRAGE; ANTWORT"
@@ -35,7 +35,7 @@ pipeline:
 
   # initialize session
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: search
 
@@ -60,9 +60,6 @@ pipeline:
     params:
       item: './/li[@name="RecordRepeater"]'
       download_url: './/div[@id="aside"]//a[@class="download"]/@href'
-      skip_incremental:
-        target:
-          stage: store
       next_page:
         xpath: './/div[@class="pagination-right"]/span[@name="NextRecsConditional"]'
         formdata:
@@ -78,10 +75,10 @@ pipeline:
         published_at: './/div[@class="topic"]/p[@class="info"]'
     handle:
       next_page: search
-      download: download
+      pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: clean
 
@@ -97,6 +94,8 @@ pipeline:
         answerers:
           - .*\sund\sAntwort\s(.+?(?=\s\d)).*
           - ^Bezug:\sAntwort\s(.+?(?=\s\d)).*
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 

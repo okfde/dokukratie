@@ -10,11 +10,12 @@ setup(
     package_dir={"dokukratie": "dokukratie"},
     namespace_packages=[],
     include_package_data=True,
+    entry_points={"console_scripts": ["dokukratie=dokukratie.cli:cli"]},
     zip_safe=False,
     install_requires=[
         "click<8.0.0",
-        "memorious @ git+https://github.com/alephdata/memorious",  # FIXME
-        "mmmeta @ git+https://github.com/simonwoerpel/mmmeta@develop",
+        "memorious @ git+https://github.com/simonwoerpel/memorious",  # FIXME
+        "mmmeta",
         "furl",
         "pyicu",
     ],

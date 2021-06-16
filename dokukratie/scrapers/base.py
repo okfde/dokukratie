@@ -1,7 +1,6 @@
 from packaging.version import parse as versionparse
 
 from .operations import init
-from .util import skip_while_testing as _skip_while_testing
 
 
 class Version:
@@ -47,6 +46,3 @@ class BaseScraper:
         emit data for legislative terms and document types to next stage
         """
         init(self.context)
-
-    def skip_while_testing(self, key=None, counter=-1):
-        return _skip_while_testing(self.context, key, counter)

@@ -4,7 +4,7 @@ description: PARLIS Baden-Württemberg
 publisher:
   type: parliament
   name: Landtag von Baden-Württemberg
-  url: https://www.landtag-bw.de/home/dokumente/parlamentsdokumentation.html
+  url: https://www.landtag-bw.de
   jurisdiction:
     id: bw
     name: Baden-Württemberg
@@ -30,7 +30,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse
 
@@ -46,6 +46,9 @@ pipeline:
 
   clean:
     method: dokukratie.scrapers.operations:clean
+    params:
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 

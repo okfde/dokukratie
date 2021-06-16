@@ -1,40 +1,69 @@
-name: dokukratie_hb
-description: Kleine Anfragen Bremen
-state: hb
+name: hb
+description: Parlamentsdokumentation Bremen (PARIS)
 
 scraper:
   name: starweb
   version: 5.7.00
-  url: "https://paris.bremische-buergerschaft.de/starweb/paris/servlet.starweb?path=paris/LISSH.web"
+  url: https://paris.bremische-buergerschaft.de/
+
+publisher:
+  type: parliament
+  name: Bremische Bürgerschaft
+  url: https://bremische-buergerschaft.de
+  jurisdiction:
+    id: hb
+    name: Bremen
 
 document_types:
-  minor: "KLEINE ANFRAGE UND ANTWORT DES SENATS"
-  major: "MITTEILUNG DES SENATS (ANTWORT AUF GROẞE ANFRAGEN); MITTEILUNG DES SENATS (ANTWORT AUF  GROẞE ANFRAGE)"
+  minor_interpellation: "KLEINE ANFRAGE UND ANTWORT DES SENATS"
+  major_interpellation: "MITTEILUNG DES SENATS (ANTWORT AUF GROẞE ANFRAGEN); MITTEILUNG DES SENATS (ANTWORT AUF  GROẞE ANFRAGE)"
 
 pipeline:
 
+  # emit scrape criteria
   init:
     method: dokukratie.scrapers.starweb:init
     params:
       legislative_terms: 20
       document_types:
-        - minor
-        # - major
+        - minor_interpellation
+        # - major_interpellation
+      dateformat: "%d.%m.%Y"
+      url: https://paris.bremische-buergerschaft.de/starweb/paris/servlet.starweb?path=paris/LISSH.web
+    handle:
+      pass: fetch
+
+  # initialize session
+  fetch:
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: search
 
+  # perform search via post form
   search:
     method: dokukratie.scrapers.starweb:search
     params:
       fields:
         legislative_term: 12_LISSH_WP
         document_type: 07_LISSH_DTYP
+        start_date: 13_LISSH_FASTDATV
+        end_date: 14_LISSH_FASTDATB
       formdata:
-        __action: 19
-        08_LISSH_DART: "DRUCKSACHE"
-        LimitMaximumHitCount: S32{ITEMS+1:10000000}
+        __action: 20
+        08_LISSH_DART: DRUCKSACHE
+        # LimitMaximumHitCount: S32{ITEMS+1:10000000}
         11_LISSH_PARL: L
+    handle:
+      pass: full_view
 
+  # post form to full view
+  full_view:
+    method: dokukratie.scrapers.starweb:post
+    params:
+      formdata:
+        __action: 50
+        __ReportId: LISSH_BrowseReportHistoryList^0
+        LISSH_Browse_ReportFormatList: LISSH_Vorgaenge_Report
     handle:
       pass: parse_results
 
@@ -59,23 +88,15 @@ pipeline:
       download: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
-      pass: parse
+      pass: clean
 
-  parse:
-    method: parse
-    params:
-      store:
-        mime_group: documents
-    handle:
-      store: clean
-
+  # extract & cleanup metadata
   clean:
-    method: dokukratie.util:clean
+    method: dokukratie.scrapers.operations:clean
     params:
       extractors:
-        reference: .*Drucksache\s(\d{1,2}\/\d+)\s.*
         published_at: \d{2}\.\d{2}\.\d{4}
         originators: .*Antwort\s+(.*)\sund\sAntwort.*
         answerers: .*\sund\sAntwort\s(.+?(?=\s\d)).*
@@ -83,6 +104,6 @@ pipeline:
       pass: store
 
   store:
-    method: directory
-    params:
-      path: data
+    method: dokukratie.scrapers.operations:store
+    handle:
+      pass: store

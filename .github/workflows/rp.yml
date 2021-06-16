@@ -1,4 +1,4 @@
-name: mv
+name: rp
 
 on:
   workflow_dispatch:
@@ -56,7 +56,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          make mv.pull
+          make rp.pull
       - name: Run crawler
         env:
           MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
@@ -68,11 +68,11 @@ jobs:
           LEGISLATIVE_TERMS: ${{ github.event.inputs.legislative_term }}
           DOCUMENT_TYPES: ${{ github.event.inputs.document_type }}
         run: |
-          make mv.run_prod
+          make rp.run_prod
       - name: Generate mmmeta
         if: always()
         run: |
-          make mv.mmmeta
+          make rp.mmmeta
       - name: Upload data
         if: always()
         env:
@@ -80,4 +80,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          make mv.upload
+          make rp.upload

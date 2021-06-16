@@ -4,7 +4,7 @@ description: Parlamentsdatenbank Nordrhein-Westfalen
 publisher:
   type: parliament
   name: Landtag NRW
-  url: https://www.landtag.nrw.de/home/dokumente_und_recherche/parlamentsdatenbank.html
+  url: https://www.landtag.nrw.de
   jurisdiction:
     id: nw
     name: Nordrhein-Westfalen
@@ -68,10 +68,10 @@ pipeline:
     params:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 
   store:
     method: dokukratie.scrapers.operations:store
-    params:
-      path: data

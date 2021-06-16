@@ -14,7 +14,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_list
 
@@ -30,7 +30,7 @@ pipeline:
       pass: fetch_detail
 
   fetch_detail:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_detail
 
@@ -43,7 +43,7 @@ pipeline:
       pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: store
 

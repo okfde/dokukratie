@@ -36,19 +36,44 @@ have not seen before. To disable this behaviour, set
 
 German state parliaments:
 
+- [![bb](https://github.com/okfde/dokukratie/actions/workflows/bb.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bb.yml) [bb - Landtag Brandenburg](#bb)
 - [![bw](https://github.com/okfde/dokukratie/actions/workflows/bw.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bw.yml) [bw - Landtag von Baden-Württemberg](#bw)
 - [![by](https://github.com/okfde/dokukratie/actions/workflows/by.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/by.yml) [by - Bayerischer Landtag](#by)
 - [![hh](https://github.com/okfde/dokukratie/actions/workflows/hh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hh.yml) [hh - Hamburgische Bürgerschaft](#hh)
+- [![he](https://github.com/okfde/dokukratie/actions/workflows/he.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/he.yml) [he - Hessischer Landtag](#he)
 - [![mv](https://github.com/okfde/dokukratie/actions/workflows/mv.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/mv.yml) [mv - Landtag Mecklenburg-Vorpommern](#mv)
+- [![ni](https://github.com/okfde/dokukratie/actions/workflows/ni.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/ni.yml) [ni - Landtag Niedersachsen](#ni)
+- [![rp](https://github.com/okfde/dokukratie/actions/workflows/rp.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/rp.yml) [rp - Landtag Rheinland-Pfalz](#rp)
 - [![st](https://github.com/okfde/dokukratie/actions/workflows/st.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/st.yml) [st - Landtag von Sachsen-Anhalt](#st)
 - [![th](https://github.com/okfde/dokukratie/actions/workflows/th.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/th.yml) [th - Thüringer Landtag](#th)
 
 Other scrapers:
 
-- [dip - Dokumentations- und Informationssystem für Parlamentsmaterialien - API](#dip)
-- [parlamentsspiegel - Parlamentsspiegel (gemeinsames Informationssystem der Landesparlamente)](#parlamentsspiegel)
+- [![dip](https://github.com/okfde/dokukratie/actions/workflows/dip.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/dip.yml) [dip - Dokumentations- und Informationssystem für Parlamentsmaterialien - API](#dip)
+- [![parlamentsspiegel](https://github.com/okfde/dokukratie/actions/workflows/parlamentsspiegel.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/parlamentsspiegel.yml) [parlamentsspiegel - Parlamentsspiegel (gemeinsames Informationssystem der Landesparlamente)](#parlamentsspiegel)
 - [![sehrgutachten](https://github.com/okfde/dokukratie/actions/workflows/sehrgutachten.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/sehrgutachten.yml) [sehrgutachten - Gutachten der Wissenschaftlichen Dienste](#sehrgutachten)
 - [vsberichte - Verfassungsschutzberichte des Bundes und der Länder](#vsberichte)
+
+
+### bb
+
+**Landtag Brandenburg**
+
+    memorious run bb
+
+The scraper uses the [starweb](#starweb) implementation using this form:
+https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/servlet.starweb?path=LBB/ELVIS/LISSH.web&AdvancedSearch=yes
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 7
+
+**earliest**: 1
+
+#### `DOCUMENT_TYPES`:
+
+Unfortunately, Brandenburg gives no results with answers for types "Kleine
+Anfrage" or "Große Anfrage", so the type option is unusable.
 
 
 ### bw
@@ -91,6 +116,26 @@ The scraper uses this result page: https://www.bayern.landtag.de/parlament/dokum
 - `minor_interpellation`
 - `major_interpellation`
 
+
+### he
+
+**Hessischer Landtag**
+
+    memorious run he
+
+The scraper uses the [starweb](#starweb) implementation using this form:
+http://starweb.hessen.de/starweb/LIS/servlet.starweb?path=LIS/PdPi.web
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 20
+
+**earliest**: 14 (or: 8?) // TODO
+
+#### `DOCUMENT_TYPES`:
+- `minor_interpellation`
+- `major_interpellation`
+
 ### hh
 
 **Hamburgische Bürgerschaft**
@@ -128,6 +173,41 @@ https://www.dokumentation.landtag-mv.de/parldok/formalkriterien/
 **current**: 7
 
 **earliest**: 1
+
+
+### ni
+
+**Landtag Niedersachsen**
+
+    memorious run ni
+
+The scraper uses the [starweb](#starweb) implementation using this form:
+https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/lissh.web
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 18
+
+**earliest**: 10
+
+### rp
+
+**Landtag Rheinland-Pfalz**
+
+    memorious run rp
+
+The scraper uses the [starweb](#starweb) implementation using this form:
+https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 18
+
+**earliest**: 11
+
+#### `DOCUMENT_TYPES`:
+- `minor_interpellation`
+- `major_interpellation`
 
 ### st
 
@@ -244,12 +324,12 @@ Some others share the same software for their document database backend/frontend
 
 Used by:
 - [st](#st)
-- bb
+- [bb](#bb)
 - be
 - hb
-- he
-- ni
-- rp
+- [he](#he)
+- [ni](#ni)
+- [rp](#rp)
 
 Code: [`./dokukratie/scrapers/starweb.py`](./dokukratie/scrapers/starweb.py)
 

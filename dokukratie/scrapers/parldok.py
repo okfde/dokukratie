@@ -1,5 +1,6 @@
 from urllib.parse import urljoin
 
+from banal import clean_dict
 from memorious.operations.parse import parse_for_metadata
 
 from .base import BaseScraper
@@ -17,12 +18,18 @@ class ParldokScraper(BaseScraper):
         legislative_term and document_type to create a session that will be
         passed along to the next stages
         """
-        res = self.context.http.post(
-            self.base_url,
-            data={
+        post_data = clean_dict(
+            {
                 "DokumententypId": data["document_type"],
                 "LegislaturperiodenNummer": data["legislative_term"],
-            },
+                "DatumVon": data.get("start_date"),
+                "DatumBis": data.get("end_date"),
+            }
+        )
+
+        res = self.context.http.post(
+            self.base_url,
+            data=post_data,
         )
         self.context.log.info("Search [%s]: %s" % (res.status_code, res.url))
         self.context.emit(data={**data, **res.serialize()})
@@ -46,11 +53,11 @@ class ParldokScraper(BaseScraper):
             url = urljoin(self.base_url, url)
 
             data["url"] = data["source_url"] = url
-            if not skip_incremental(self.context, data, self.skip_incremental_config):
+            if not skip_incremental(
+                self.context, data, self.skip_incremental_config, test_loops=3
+            ):
                 parse_for_metadata(self.context, data, item)
                 self.context.emit("fetch", data=data)
-                if self.skip_while_testing("yield_items", 3):
-                    break
 
     def emit_next_page(self, data):
         """

@@ -4,7 +4,7 @@ description: Parlamentsdokumentation Thüringen
 publisher:
   type: parliament
   name: Thüringer Landtag
-  url: http://parldok.thueringen.de/ParlDok/formalkriterien/
+  url: https://www.thueringer-landtag.de
   jurisdiction:
     id: th
     name: Thüringen
@@ -24,8 +24,9 @@ pipeline:
     params:
       legislative_terms: 7
       document_types:
-        # - major_interpellation
         - minor_interpellation
+        # - major_interpellation
+      dateformat: "%d.%m.%Y"
     handle:
       pass: search
 
@@ -35,7 +36,7 @@ pipeline:
       pass: fetch_results
 
   fetch_results:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_results
 
@@ -54,12 +55,13 @@ pipeline:
       fetch: fetch_detail
 
   fetch_detail:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
+    handle:
     handle:
       pass: parse_detail
 
   parse_detail:
-    method: parse
+    method: dokukratie.scrapers.operations:parse
     params:
       store:
         mime_group: documents
@@ -76,6 +78,8 @@ pipeline:
     params:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
+      dateparser:
+        dayfirst: true
     handle:
       pass: store
 

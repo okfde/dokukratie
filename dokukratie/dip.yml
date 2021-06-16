@@ -31,7 +31,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse
 
@@ -48,7 +48,7 @@ pipeline:
 
   # if is_answer
   fetch_reference:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse_reference
 
@@ -58,7 +58,7 @@ pipeline:
       pass: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: clean
 

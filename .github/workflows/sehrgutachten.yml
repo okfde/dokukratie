@@ -1,4 +1,3 @@
-
 name: sehrgutachten
 
 on:
@@ -8,6 +7,10 @@ on:
         description: 'Start date'
       end_date:
         description: 'End date'
+      legislative_term:
+        description: 'Legislative term'
+      document_type:
+        description: 'Document type'
   schedule:
     - cron: "0 3 * * *"
 
@@ -62,12 +65,16 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
+          LEGISLATIVE_TERMS: ${{ github.event.inputs.legislative_term }}
+          DOCUMENT_TYPES: ${{ github.event.inputs.document_type }}
         run: |
           make sehrgutachten.run_prod
       - name: Generate mmmeta
+        if: always()
         run: |
           make sehrgutachten.mmmeta
       - name: Upload data
+        if: always()
         env:
           DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 from itertools import product
 
 from banal import clean_dict, ensure_dict, ensure_list
@@ -7,14 +8,14 @@ from memorious.helpers.rule import Rule
 from memorious.operations.fetch import fetch as memorious_fetch
 from memorious.operations.parse import parse_for_metadata, parse_html
 from memorious.operations.store import directory as memorious_store
-from servicelayer import env
+from mmmeta.util import casted_dict
 
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
 from .mmmeta import get_start_date
-from .util import re_first  # , skip_while_testing
-from .util import cast, ensure_date, flatten_dict
+from .util import ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
+from .util import pretty_dict, re_first
 
 
 def init(context, data=None):
@@ -34,11 +35,15 @@ def init(context, data=None):
     dateformat = context.params.get("dateformat", "%Y-%m-%d")
     start_date = ensure_date(_geoc(context, "START_DATE"))
     end_date = ensure_date(_geoc(context, "END_DATE"))
+
+    # get from mmmeta
     if start_date is None:
         start_date = ensure_date(get_start_date(context))
 
     if start_date is not None:
         start_date = start_date.strftime(dateformat)
+        if end_date is None:
+            end_date = datetime.now().date()
     if end_date is not None:
         end_date = end_date.strftime(dateformat)
 
@@ -53,6 +58,7 @@ def init(context, data=None):
                 "end_date": end_date,
             }
         )
+        context.log.debug(f"Using parameters: {pretty_dict(data)}")
         url = context.params.get("url")
         if url:
             fu = furl(url)
@@ -88,25 +94,30 @@ def parse(context, data):
 def fetch(context, data):
     """
     an extended fetch to be able to skip_incremental based on passed data dict
+    and reduce fetches while testing
     """
     if not skip_incremental(context, data):
         memorious_fetch(context, data)
 
 
-def clean(context, data):
+DELETE_KEYS = ("page", "formdata")
+
+# don't apply typing here:
+UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
+
+# ensure lists
+LISTISH_KEYS = ("originators", "answerers")
+
+DATE_KEYS = ("published_at",)
+
+
+def clean(context, data, emit=True):
     """
     clean metadata and make sure it is as it is supposed to be
 
     optional parameters in yaml config:
         extractors: key, value dict for fields to extract their content via regex
     """
-    DELETE_KEYS = ("page", "formdata")
-
-    # don't apply typing here:
-    UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
-
-    # ensure lists
-    LISTISH_KEYS = ("originators", "answerers")
 
     if context is not None:
         # add some crawler metadata
@@ -119,10 +130,20 @@ def clean(context, data):
             doctype_keys = {
                 v: k for k, v in context.crawler.config["document_types"].items()
             }
-            data["document_type"] = doctype_keys[data["document_type"]]
+            data["document_type"] = doctype_keys.get(
+                data["document_type"], data["document_type"]
+            )
 
         # extract some extra data
-        for key, patterns in ensure_dict(context.get("extractors")).items():
+        for key, patterns in ensure_dict(context.params.get("extractors")).items():
+            if key not in data:
+                continue
+            if not isinstance(data.get(key), str):
+                # already parsed
+                continue
+
+            # save original for further re-parsing
+            data[f"{key}__unparsed"] = data[key]
             value = None
             patterns = ensure_list(patterns)
             for pattern in patterns:
@@ -140,6 +161,12 @@ def clean(context, data):
                     "Can't extract metadata for `%s`: [%s] %s"
                     % (key, pattern.pattern, data[key])
                 )
+                data[key] = None
+
+        # clean some values
+        for key, values in ensure_dict(context.params.get("values")).items():
+            if data.get(key) in values:
+                data[key] = values[data[key]]
 
     # ensure document id metadata
     if "reference" in data:
@@ -165,10 +192,14 @@ def clean(context, data):
     for key in LISTISH_KEYS:
         if key in data:
             data[key] = ensure_list(data[key])
-    data = {k: cast(v) if k not in UNCASTED_KEYS else v for k, v in data.items()}
+    parserkwargs = ensure_dict(context.params.get("dateparser"))
+    for key in DATE_KEYS:
+        if key in data:
+            data[key] = ensure_date(data[key], **parserkwargs)
+    data = casted_dict(data, ignore_keys=UNCASTED_KEYS)
 
     # emit to next stage or return
-    if context is not None:
+    if context is not None and emit:
         context.emit(data=data)
     else:
         return data
@@ -176,17 +207,15 @@ def clean(context, data):
 
 def store(context, data):
     """
-    an extended store to be able to set skip_incremental and quit the scraper
-    after first store during test run
+    an extended store to be able to set skip_incremental
     """
     memorious_store(context, data)
     incremental = ensure_dict(data.get("skip_incremental"))
     if incremental.get("target") == context.stage.name:
         if incremental.get("key") is not None:
             context.set_tag(incremental["key"], True)
-    if env.to_bool("TESTING_MODE"):
-        context.crawler.cancel()
-        context.log.debug("Cancelling crawler run because of test mode.")
+    # during testing mode:
+    skip_incremental(context, data)
 
 
 def parse_json(context, data):

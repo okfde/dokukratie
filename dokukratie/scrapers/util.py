@@ -1,10 +1,11 @@
+import json
 import re
 from datetime import date, datetime
 
 from dateutil.parser import ParserError
 from dateutil.parser import parse as dateparse
+from mmmeta.util import datetime_to_json
 from servicelayer import env
-from servicelayer.cache import make_key
 
 from .exceptions import RegexError
 
@@ -48,7 +49,8 @@ def cast(value):
 
 def re_first(pattern, string):
     try:
-        return re.findall(pattern, string)[0]
+        value = re.findall(pattern, string)[0]
+        return value.strip()
     except Exception as e:
         raise RegexError(str(e), string)
 
@@ -64,24 +66,6 @@ def get_value_from_xp(html, path):
     return part
 
 
-def skip_while_testing(context, key=None, counter=-1):
-    # try to speed up tests...
-    if not env.to_bool("TESTING_MODE"):
-        return False
-
-    key = make_key(
-        "skip_while_testing", context.crawler, context.stage, context.run_id, key
-    )
-    tag = context.get_tag(key)
-    if tag is None:
-        context.set_tag(key, 0)
-        return False
-    if tag > counter:
-        context.log.debug("Skipping: %s" % key)
-        return True
-    context.set_tag(key, tag + 1)
-
-
 def flatten_dict(d):
     def items():
         for key, value in d.items():
@@ -92,3 +76,12 @@ def flatten_dict(d):
                 yield key, value
 
     return dict(items())
+
+
+def pretty_dict(d):
+    """
+    for logging purposes
+    """
+    return json.dumps(
+        {k: v for k, v in d.items() if v}, indent=2, default=datetime_to_json
+    )
