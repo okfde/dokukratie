@@ -168,4 +168,4 @@ class Test(unittest.TestCase):
         )
 
     def test_vsberichte(self):
-        self.run_scraper("vsberichte")
+        self.run_scraper("vsberichte", start_date="2020-01-01")
