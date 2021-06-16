@@ -1,7 +1,7 @@
 from banal import ensure_list, is_mapping
 from furl import furl
 
-from .incremental import skip_incremental, skip_while_testing
+from .incremental import skip_incremental
 
 
 def _test(data, key, value):
@@ -71,23 +71,22 @@ def parse(context, data):
                         },
                     )
 
-                    if skip_while_testing(context, "yield_items", 10):
-                        break
-
     # next page
     fu = furl(data["url"])
     if res.json["cursor"] != fu.args.get("cursor"):
         fu.args["cursor"] = res.json["cursor"]
-
-        if not skip_while_testing(context, "paginate", 10):
-            context.emit("cursor", data={**data, **{"url": fu.url}})
+        data["fetch_recursion"] = 0
+        context.emit("cursor", data={**data, **{"url": fu.url}})
 
 
 def parse_reference(context, data):
     """
     enrich with originators etc
     """
-    res = context.http.rehash(data)
-    data["reference_data"] = res.json
-    data["originators"] = res.json["initiative"]
-    context.emit(data={**data, **{"url": data["document"]["fundstelle"]["pdf_url"]}})
+    if not skip_incremental(context, data):
+        res = context.http.rehash(data)
+        data["reference_data"] = res.json
+        data["originators"] = res.json["initiative"]
+        context.emit(
+            data={**data, **{"url": data["document"]["fundstelle"]["pdf_url"]}}
+        )

@@ -33,7 +33,7 @@ pipeline:
 
   # initialize session
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: search
 

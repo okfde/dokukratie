@@ -32,7 +32,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: parse
 
@@ -49,7 +49,7 @@ pipeline:
       download: download
 
   download:
-    method: fetch
+    method: dokukratie.scrapers.operations:fetch
     handle:
       pass: store
 

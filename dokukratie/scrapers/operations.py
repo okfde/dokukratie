@@ -11,11 +11,11 @@ from memorious.operations.store import directory as memorious_store
 from mmmeta.util import casted_dict
 
 from .exceptions import MetaDataError, RegexError
-from .incremental import skip_incremental, skip_while_testing
+from .incremental import skip_incremental
 from .mmmeta import get_start_date
 from .util import ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
-from .util import re_first
+from .util import pretty_dict, re_first
 
 
 def init(context, data=None):
@@ -58,6 +58,7 @@ def init(context, data=None):
                 "end_date": end_date,
             }
         )
+        context.log.debug(f"Using parameters: {pretty_dict(data)}")
         url = context.params.get("url")
         if url:
             fu = furl(url)
@@ -77,19 +78,13 @@ def parse(context, data):
     """
 
     if not skip_incremental(context, data):
-        # track recursion
-        data["parse_recursion"] = data.get("parse_recursion", -1) + 1
-        context.log.debug(f"Parse recursion: {data['parse_recursion']}")
         with context.http.rehash(data) as result:
             if result.html is not None:
                 # Get extra metadata from the DOM
                 parse_for_metadata(context, data, result.html)
                 # maybe data is updated with unique identifier for incremental skip
                 if not skip_incremental(context, data):
-                    if not skip_while_testing(
-                        context, f"parse_{data['parse_recursion']}", 3
-                    ):
-                        parse_html(context, data, result)
+                    parse_html(context, data, result)
 
             rules = context.params.get("store") or {"match_all": {}}
             if Rule.get_rule(rules).apply(result):
@@ -102,11 +97,7 @@ def fetch(context, data):
     and reduce fetches while testing
     """
     if not skip_incremental(context, data):
-        # track recursion
-        data["fetch_recursion"] = data.get("fetch_recursion", -1) + 1
-        context.log.debug(f"Fetch recursion: {data['fetch_recursion']}")
-        if not skip_while_testing(context, f"fetch_{data['fetch_recursion']}", 3):
-            memorious_fetch(context, data)
+        memorious_fetch(context, data)
 
 
 DELETE_KEYS = ("page", "formdata")
@@ -216,17 +207,15 @@ def clean(context, data, emit=True):
 
 def store(context, data):
     """
-    an extended store to be able to set skip_incremental and quit the scraper
-    after first store during test run
+    an extended store to be able to set skip_incremental
     """
     memorious_store(context, data)
     incremental = ensure_dict(data.get("skip_incremental"))
     if incremental.get("target") == context.stage.name:
         if incremental.get("key") is not None:
             context.set_tag(incremental["key"], True)
-    if skip_while_testing(context, "store", 1):
-        context.crawler.cancel()
-        context.log.debug("Cancelling crawler run because of test mode.")
+    # during testing mode:
+    skip_incremental(context, data)
 
 
 def parse_json(context, data):

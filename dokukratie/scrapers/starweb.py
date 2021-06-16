@@ -7,7 +7,7 @@ from memorious.operations.parse import parse_for_metadata
 from .base import BaseScraper
 from .incremental import skip_incremental
 from .util import get_value_from_xp as x
-from .util import re_first
+from .util import pretty_dict, re_first
 
 
 class StarwebScraper(BaseScraper):
@@ -24,7 +24,7 @@ class StarwebScraper(BaseScraper):
         if form is None:
             self.context.log.error(f"Cannot find form: `{form_xp}`")
             self.context.crawler.cancel()
-        return None, None
+            return None, None
         return x(form, "@action"), {
             **{i.name: i.value for i in form.findall(".//input")},
             **{i.name: i.value for i in form.findall(".//select")},
@@ -64,6 +64,7 @@ class StarwebScraper(BaseScraper):
                     formdata[field] = value
 
             # do the post search and emit to next stage
+            self.context.log.debug(f"Using formdata: {pretty_dict(formdata)}")
             res = self.context.http.post(form_url, data=formdata)
             self.context.emit(data={**data, **res.serialize()})
 
@@ -126,6 +127,7 @@ class StarwebScraper(BaseScraper):
         res = self.context.http.rehash(data)
         form_url, formdata = self.get_formdata(res.html)
         if form_url is not None and formdata is not None:
+            self.context.log.debug(f"Using formdata: {pretty_dict(formdata)}")
             formdata.update(ensure_dict(self.context.params.get("formdata")))
             res = self.context.http.post(form_url, data=formdata)
             self.context.emit(data={**data, **res.serialize()})

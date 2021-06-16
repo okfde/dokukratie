@@ -21,7 +21,11 @@ dip: dip.pull dip.run_prod dip.mmmeta dip.upload
 
 he.run_prod:
 	# don't ddos hessen
-	MEMORIOUS_HTTP_RATE_LIMIT=30 START_DATE_DELTA=7 MMMETA=./data/store/he memorious run he --threads=4
+	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he --threads=4
+
+parlamentsspiegel.run_prod:
+	# don't go back too far
+	START_DATE_DELTA=2 MMMETA=./data/store/parlamentsspiegel memorious run parlamentsspiegel --threads=4
 
 %.run_prod:
 	MMMETA=./data/store/$* memorious run $* --threads=4

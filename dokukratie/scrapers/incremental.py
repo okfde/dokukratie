@@ -8,7 +8,7 @@ from servicelayer.cache import make_key
 from .util import get_value_from_xp as x
 
 
-def skip_incremental(context, data, config=None):
+def should_skip_incremental(context, data, config=None):
     """
     a more advanced skip_incremental implementation
 
@@ -62,19 +62,80 @@ def skip_incremental(context, data, config=None):
         data["skip_incremental"] = {"target": target["stage"], "key": target_key}
 
 
-def skip_while_testing(context, key=None, counter=-1):
+def skip_while_testing(context, stage=None, key=None, counter=-1):
     # try to speed up tests...
     if not env.to_bool("TESTING_MODE"):
         return False
 
     key = make_key(
-        "skip_while_testing", context.crawler, context.stage, context.run_id, key
+        "skip_while_testing",
+        context.crawler,
+        stage or context.stage,
+        context.run_id,
+        key,
     )
     tag = context.get_tag(key)
     if tag is None:
         context.set_tag(key, 0)
         return False
-    if tag > counter:
+    if tag >= counter:
         context.log.debug("Skipping: %s" % key)
         return True
     context.set_tag(key, tag + 1)
+
+
+def skip_incremental(
+    context,
+    data,
+    config=None,
+    previous_stage_test_runs=1,
+    current_stage_test_runs=1,
+    test_loops=None,
+):
+    """
+    set up some incremental logic and pass through skip_incremental
+
+    testing logic:
+    if the "current" stage is reached X times, the "previous" will be marked
+    as to skip for all next executions to speed up test run
+    """
+    # production use of skip_incremental
+    if should_skip_incremental(context, data, config):
+        return True
+
+    if env.to_bool("TESTING_MODE"):
+        # we reached the last stage?
+        if data.get("skip_incremental", {}).get("target") == context.stage.name:
+            context.log.debug("Cancelling crawler run because of test mode.")
+            context.crawler.cancel()
+            return
+
+        # track recursion
+        recursion = data.get(f"{context.stage}_recursion", 0)
+        if test_loops is None:
+            recursion += 1
+        data[f"{context.stage}_recursion"] = recursion
+        context.log.debug(f"{context.stage} recursion: {recursion}")
+        previous_stage = data["previous_stage"] = data.get("current_stage")
+        current_stage = data["current_stage"] = context.stage.name
+
+        previous_finished = False
+        current_finished = False
+
+        if previous_stage is not None:
+            # update counting for previous stage
+            previous_recursion = data.get(f"{previous_stage}_recursion", 0)
+            previous_finished = skip_while_testing(
+                context, previous_stage, previous_recursion, previous_stage_test_runs
+            )
+            if previous_finished:
+                context.log.debug(
+                    f"Testing: finished stage `{previous_stage}_{previous_recursion}`"
+                )
+
+        if previous_stage is None or previous_finished:
+            # update counting for current stage
+            current_finished = skip_while_testing(
+                context, current_stage, recursion, current_stage_test_runs
+            )
+        return current_finished

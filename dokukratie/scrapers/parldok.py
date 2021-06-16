@@ -53,11 +53,11 @@ class ParldokScraper(BaseScraper):
             url = urljoin(self.base_url, url)
 
             data["url"] = data["source_url"] = url
-            if not skip_incremental(self.context, data, self.skip_incremental_config):
+            if not skip_incremental(
+                self.context, data, self.skip_incremental_config, test_loops=3
+            ):
                 parse_for_metadata(self.context, data, item)
                 self.context.emit("fetch", data=data)
-                if self.skip_while_testing("yield_items", 3):
-                    break
 
     def emit_next_page(self, data):
         """

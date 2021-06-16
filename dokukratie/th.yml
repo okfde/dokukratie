@@ -61,7 +61,7 @@ pipeline:
       pass: parse_detail
 
   parse_detail:
-    method: parse
+    method: dokukratie.scrapers.operations:parse
     params:
       store:
         mime_group: documents

@@ -1,8 +1,10 @@
+import json
 import re
 from datetime import date, datetime
 
 from dateutil.parser import ParserError
 from dateutil.parser import parse as dateparse
+from mmmeta.util import datetime_to_json
 from servicelayer import env
 
 from .exceptions import RegexError
@@ -74,3 +76,12 @@ def flatten_dict(d):
                 yield key, value
 
     return dict(items())
+
+
+def pretty_dict(d):
+    """
+    for logging purposes
+    """
+    return json.dumps(
+        {k: v for k, v in d.items() if v}, indent=2, default=datetime_to_json
+    )
