@@ -22,6 +22,14 @@ parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentss
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
 
+# all the things
+states.config: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
+states.pull: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
+states.mmmeta: bb.mmmeta bw.mmmeta by.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta st.mmmeta th.mmmeta
+states.upload: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
+states.push: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
+states.sync: states.config states.pull states.mmmeta states.upload
+
 he.run_prod:
 	# don't ddos hessen
 	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he --threads=4
@@ -56,6 +64,7 @@ install.test: install.dev
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
 	sed "s/<scraper_name>/$*/" config.yml.tmpl > ./data/store/$*/_mmmeta/config.yml
+
 
 %.action:
 	mkdir -p ./.github/workflows/
