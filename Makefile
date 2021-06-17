@@ -14,7 +14,6 @@ ni: ni.pull ni.run_prod ni.mmmeta ni.upload
 nw: nw.pull nw.run_prod nw.mmmeta nw.upload
 rp: rp.pull rp.run_prod rp.mmmeta rp.upload
 st: st.pull st.run_prod st.mmmeta st.upload
-
 th: th.pull th.run_prod th.mmmeta th.upload
 
 # other scrapers
