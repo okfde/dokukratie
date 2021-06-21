@@ -175,9 +175,12 @@ def clean(context, data, emit=True):
     elif "document_id" in data and "legislative_term" in data:
         data["reference"] = "{legislative_term}/{document_id}".format(**data)
     else:
-        raise MetaDataError(
-            "Either `reference` or `legislative_term` and `document_id` must be present in metadata"  # noqa
+        context.emit_warning(
+            MetaDataError(
+                "Either `reference` or `legislative_term` and `document_id` must be present in metadata"  # noqa
+            )
         )
+        return
 
     # unique foreign id accross all scrapers:
     data["foreign_id"] = "%s-%s" % (
