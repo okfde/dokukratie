@@ -14,7 +14,6 @@ ni: ni.pull ni.run_prod ni.mmmeta ni.upload
 nw: nw.pull nw.run_prod nw.mmmeta nw.upload
 rp: rp.pull rp.run_prod rp.mmmeta rp.upload
 st: st.pull st.run_prod st.mmmeta st.upload
-
 th: th.pull th.run_prod th.mmmeta th.upload
 
 # other scrapers
@@ -22,6 +21,14 @@ dip: dip.pull dip.run_prod dip.mmmeta dip.upload
 parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
+
+# all the things
+config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
+pull.states: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
+mmmeta.states: bb.mmmeta bw.mmmeta by.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta st.mmmeta th.mmmeta
+upload.states: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
+push.states: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
+sync.states: states.config states.pull states.mmmeta states.upload
 
 he.run_prod:
 	# don't ddos hessen
@@ -57,6 +64,7 @@ install.test: install.dev
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
 	sed "s/<scraper_name>/$*/" config.yml.tmpl > ./data/store/$*/_mmmeta/config.yml
+
 
 %.action:
 	mkdir -p ./.github/workflows/

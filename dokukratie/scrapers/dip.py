@@ -36,7 +36,12 @@ def parse(context, data):
                 data["is_answer"] = is_answer
                 emitted_yet = False
                 if not is_answer:
-                    data["originators"] = [i["titel"] for i in document["urheber"]]
+                    data["originators"] = [
+                        i["titel"]
+                        for i in ensure_list(
+                            document.get("urheber", document.get("autoren_anzeige"))
+                        )
+                    ]
                 else:
                     data["answerers"] = [i["titel"] for i in document["urheber"]]
                     # enrich with vorgangsdata to get originators
