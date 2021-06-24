@@ -37,6 +37,7 @@ have not seen before. To disable this behaviour, set
 German state parliaments:
 
 - [![bb](https://github.com/okfde/dokukratie/actions/workflows/bb.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bb.yml) [bb - Landtag Brandenburg](#bb)
+- [![be](https://github.com/okfde/dokukratie/actions/workflows/be.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/be.yml) [be - Abgeordnetenhaus Berlin](#be)
 - [![bw](https://github.com/okfde/dokukratie/actions/workflows/bw.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bw.yml) [bw - Landtag von Baden-Württemberg](#bw)
 - [![by](https://github.com/okfde/dokukratie/actions/workflows/by.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/by.yml) [by - Bayerischer Landtag](#by)
 - [![hh](https://github.com/okfde/dokukratie/actions/workflows/hh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hh.yml) [hh - Hamburgische Bürgerschaft](#hh)
@@ -74,6 +75,37 @@ https://www.parlamentsdokumentation.brandenburg.de/starweb/LBB/ELVIS/servlet.sta
 
 Unfortunately, Brandenburg gives no results with answers for types "Kleine
 Anfrage" or "Große Anfrage", so the type option is unusable.
+
+### be
+
+**Abgeordnetenhaus Berlin**
+
+    memorious run be
+
+The backend used to be starweb, but recently (2021-06-24) changed to something
+completly new, which could still be something starweb related, but according to
+urls it is called "portala". The scraper still requires some refining to work
+properly with date / document_type options, for now a `START_DATE` is always
+required to run.
+
+The scraper sends some json that looks like an Elasticsearch query via post to
+this endpoint: https://pardok.parlament-berlin.de/portala/browse.tt.html
+from a [query template](./dokukratie/scrapers/portala.query.json)
+
+Although the new frontend looks fancy, that doesn't mean the service is
+performant. With too large queries (a long date range above a few months) it
+will shut down and return a 502 Error.
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 18
+
+**earliest**: 11
+
+#### `DOCUMENT_TYPES`:
+
+`written_interpellation` (Both "Große" and "Kleine" anfragen)
+
 
 
 ### bw
@@ -402,7 +434,7 @@ leave columns starting with an underscore untouched.
 
 ### 4. Access file metadata within python applications
 
-soft delete files (not existing in the s3 bucket for some reason...) are 
+soft delete files (not existing in the s3 bucket for some reason...) are
 marked with `__deleted=1` and have a `__deleted_reason` property.
 
 ```python
