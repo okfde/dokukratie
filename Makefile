@@ -5,6 +5,7 @@ export MEMORIOUS_USER_AGENT="Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) G
 # current available scrapers:
 # state scrapers
 bb: bb.pull bb.run_prod bb.mmmeta bb.upload
+be: be.pull be.run_prod be.mmmeta be.upload
 bw: bw.pull bw.run_prod bw.mmmeta bw.upload
 by: by.pull by.run_prod by.mmmeta by.upload
 hh: hh.pull hh.run_prod hh.mmmeta hh.upload
