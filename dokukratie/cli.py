@@ -12,6 +12,7 @@ from mmmeta.util import casted_dict
 
 from .scrapers.operations import clean, UNCASTED_KEYS
 from .scrapers.manage import CrawlerTags
+from .scrapers.util import pretty_dict
 
 log = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ log = logging.getLogger(__name__)
 @click.argument("crawler")
 @click.pass_context
 def cli(ctx, crawler, invoke_without_command=True):
-    configure_logging(level=logging.INFO)
+    configure_logging(level=logging.INFO, out=sys.stderr)
     if ctx.obj is None:
         ctx.obj = {}
     ctx.obj["crawler"] = get_crawler(crawler)
@@ -66,8 +67,15 @@ def add(ctx):
 
 
 @cli.command(help="Re-parse metadata for given crawler")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Dry run: Don't alter json files on disk",
+)
 @click.pass_context
-def reparse(ctx):
+def reparse(ctx, dry_run):
     crawler = ctx.obj["crawler"]
     log.info(f"Reparsing metadata for crawler `{crawler}` ...")
     stage = crawler.stages.get("clean")
@@ -85,7 +93,10 @@ def reparse(ctx):
             data = storage.load_json(path)
             data = casted_dict(data, ignore_keys=UNCASTED_KEYS)
             data = clean(context, data, emit=False)
-            storage.dump_json(path, data)
+            if dry_run:
+                sys.stdout.write(pretty_dict(data))
+            else:
+                storage.dump_json(path, data)
             i += 1
         except Exception as e:
             log.error(f"Cannot reparse `{path}`: `{e}`")
