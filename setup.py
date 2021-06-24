@@ -6,7 +6,7 @@ setup(
     version="0.1",
     classifiers=[],
     keywords="",
-    packages=find_packages("dokukratie"),
+    packages=find_packages("dokukratie", exclude=["parsers"]),
     package_dir={"dokukratie": "dokukratie"},
     namespace_packages=[],
     include_package_data=True,
