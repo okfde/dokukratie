@@ -90,11 +90,11 @@ class Test(unittest.TestCase):
                 self.assertLessEqual(dateparse(data["published_at"]).date(), end_date)
             if legislative_term is not None:
                 self.assertEqual(data["legislative_term"], legislative_term)
-            if document_type in ("major_interpellation", "minor_interpellation"):
-                self.assertIsInstance(data["originators"], list)
-                # self.assertGreaterEqual(len(data["originators"]), 1)
-                # self.assertIsInstance(data["answerers"], list)
-                # self.assertGreaterEqual(len(data["answerers"]), 1)
+            # if document_type in ("major_interpellation", "minor_interpellation"):
+            # self.assertIsInstance(data["originators"], list)
+            # self.assertGreaterEqual(len(data["originators"]), 1)
+            # self.assertIsInstance(data["answerers"], list)
+            # self.assertGreaterEqual(len(data["answerers"]), 1)
 
     def setUp(self):
         self.start_date = (datetime.now() - timedelta(days=30)).date()
