@@ -24,7 +24,7 @@ pipeline:
     method: dokukratie.scrapers.operations:init
     params:
       legislative_terms: 18  # earliest: 11
-      document_types: minor_interpellation
+      document_types: written_interpellation
       url: https://pardok.parlament-berlin.de/portala/browse.tt.html
       dateformat: "%Y %m %d"
     handle:
