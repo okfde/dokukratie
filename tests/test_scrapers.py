@@ -106,6 +106,9 @@ class Test(unittest.TestCase):
     def test_bb(self):
         self.run_scraper("bb", document_types="generic")
 
+    def test_be(self):
+        self.run_scraper("be", document_types="written_interpellation")
+
     def test_bw(self):
         self.run_scraper("bw", document_types="minor_interpellation")
         # self.run_scraper("bw", document_types="major_interpellation")

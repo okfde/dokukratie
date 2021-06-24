@@ -1,0 +1,220 @@
+{
+  "action": "SearchAndDisplay",
+  "sources": [
+    "lah.lissh"
+  ],
+  "report": {
+    "rhl": "main",
+    "rhlmode": "add",
+    "format": "generic1-full",
+    "mime": "html",
+    "sort": "WEVSO1/D WEVSO2 WEVSO3"
+  },
+  "search": {
+    "lines": {
+      "2": "%(legislative_term)s",
+      "3": "%(document_type)s",
+      "4": "D",
+      "10": "%(start_date)s",
+      "11": "%(end_date)s",
+      "20.1": "alWEBBI",
+      "20.2": "alWEBBI",
+      "20.3": "alWEBBI",
+      "90.1": "AND",
+      "90.2": "AND",
+      "90.3": "AND"
+    },
+    "serverrecordname": "sr_generic1",
+    "parsed": "((/WP %(legislative_term)s) AND (/ETYPF,ETYP2F,DTYPF,DTYP2F,1VTYPF (\"%(document_type)s\")) AND (/DART,DARTS (\"D\")) AND (DAT,DDAT,SDAT= %(start_date)s THRU %(end_date)s)) AND TYP=DOKDBE",
+    "sref": "((/WP %(legislative_term)s) AND (/ETYPF,ETYP2F,DTYPF,DTYP2F,1VTYPF (\"%(document_type)s\")) AND (/DART,DARTS (\"D\")) AND (DAT,DDAT,SDAT= %(start_date)s THRU %(end_date)s)) AND TYP=DOKDBE",
+    "json": [
+      {
+        "tn": "and",
+        "terms": [
+          {
+            "tn": "and",
+            "terms": [
+              {
+                "tn": "and",
+                "terms": [
+                  {
+                    "tn": "and",
+                    "terms": [
+                      {
+                        "t": "%(legislative_term)s",
+                        "idx": 6,
+                        "tn": "term",
+                        "l": 3,
+                        "sf": "WP",
+                        "op": "eq",
+                        "num": 5
+                      },
+                      {
+                        "tn": "or",
+                        "terms": [
+                          {
+                            "tn": "or",
+                            "terms": [
+                              {
+                                "tn": "or",
+                                "terms": [
+                                  {
+                                    "tn": "or",
+                                    "terms": [
+                                      {
+                                        "t": "\"%(document_type)s\"",
+                                        "idx": 50,
+                                        "tn": "term",
+                                        "l": 4,
+                                        "sf": "ETYPF",
+                                        "op": "eq",
+                                        "num": 10
+                                      },
+                                      {
+                                        "t": "\"%(document_type)s\"",
+                                        "idx": 50,
+                                        "tn": "term",
+                                        "l": 4,
+                                        "sf": "ETYP2F",
+                                        "op": "eq",
+                                        "num": 11
+                                      }
+                                    ],
+                                    "num": 9
+                                  },
+                                  {
+                                    "t": "\"%(document_type)s\"",
+                                    "idx": 50,
+                                    "tn": "term",
+                                    "l": 4,
+                                    "sf": "DTYPF",
+                                    "op": "eq",
+                                    "num": 12
+                                  }
+                                ],
+                                "num": 8
+                              },
+                              {
+                                "t": "\"%(document_type)s\"",
+                                "idx": 50,
+                                "tn": "term",
+                                "l": 4,
+                                "sf": "DTYP2F",
+                                "op": "eq",
+                                "num": 13
+                              }
+                            ],
+                            "num": 7
+                          },
+                          {
+                            "t": "\"%(document_type)s\"",
+                            "idx": 50,
+                            "tn": "term",
+                            "l": 4,
+                            "sf": "1VTYPF",
+                            "op": "eq",
+                            "num": 14
+                          }
+                        ],
+                        "num": 6
+                      }
+                    ],
+                    "num": 4
+                  },
+                  {
+                    "tn": "or",
+                    "terms": [
+                      {
+                        "t": "\"D\"",
+                        "idx": 93,
+                        "tn": "term",
+                        "l": 4,
+                        "sf": "DART",
+                        "op": "eq",
+                        "num": 16
+                      },
+                      {
+                        "t": "\"D\"",
+                        "idx": 93,
+                        "tn": "term",
+                        "l": 4,
+                        "sf": "DARTS",
+                        "op": "eq",
+                        "num": 17
+                      }
+                    ],
+                    "num": 15
+                  }
+                ],
+                "num": 3
+              },
+              {
+                "tn": "or",
+                "terms": [
+                  {
+                    "tn": "or",
+                    "terms": [
+                      {
+                        "t": "%(start_date)s THRU %(end_date)s",
+                        "idx": 119,
+                        "tn": "trange",
+                        "p1": "%(start_date)s",
+                        "t1": "%(start_date)s",
+                        "l": 3,
+                        "p2": "%(end_date)s",
+                        "t2": "%(end_date)s",
+                        "sf": "DAT",
+                        "op": "eq",
+                        "num": 20
+                      },
+                      {
+                        "t": "%(start_date)s THRU %(end_date)s",
+                        "idx": 119,
+                        "tn": "trange",
+                        "p1": "%(start_date)s",
+                        "t1": "%(start_date)s",
+                        "l": 3,
+                        "p2": "%(end_date)s",
+                        "t2": "%(end_date)s",
+                        "sf": "DDAT",
+                        "op": "eq",
+                        "num": 21
+                      }
+                    ],
+                    "num": 19
+                  },
+                  {
+                    "t": "%(start_date)s THRU %(end_date)s",
+                    "idx": 119,
+                    "tn": "trange",
+                    "p1": "%(start_date)s",
+                    "t1": "%(start_date)s",
+                    "l": 3,
+                    "p2": "%(end_date)s",
+                    "t2": "%(end_date)s",
+                    "sf": "SDAT",
+                    "op": "eq",
+                    "num": 22
+                  }
+                ],
+                "num": 18
+              }
+            ],
+            "num": 2
+          },
+          {
+            "t": "DOKDBE",
+            "idx": 156,
+            "tn": "term",
+            "l": 1,
+            "sf": "TYP",
+            "op": "eq",
+            "num": 23
+          }
+        ],
+        "num": 1
+      }
+    ]
+  },
+  "dataSet": "1"
+}
