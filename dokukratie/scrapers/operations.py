@@ -10,12 +10,13 @@ from memorious.operations.parse import parse_for_metadata, parse_html
 from memorious.operations.store import directory as memorious_store
 from mmmeta.util import casted_dict
 
+from ..parsers import parse as parse_metadata
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
 from .mmmeta import get_start_date
 from .util import ensure_date, flatten_dict
 from .util import get_env_or_context as _geoc
-from .util import pretty_dict, re_first
+from .util import pretty_dict, re_first, re_group
 
 
 def init(context, data=None):
@@ -105,9 +106,6 @@ DELETE_KEYS = ("page", "formdata")
 # don't apply typing here:
 UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
 
-# ensure lists
-LISTISH_KEYS = ("originators", "answerers")
-
 DATE_KEYS = ("published_at",)
 
 
@@ -138,18 +136,22 @@ def clean(context, data, emit=True):
         for key, patterns in ensure_dict(context.params.get("extractors")).items():
             if key not in data:
                 continue
-            if not isinstance(data.get(key), str):
-                # already parsed
+            if isinstance(data[key], list):  # FIXME migration
+                if len(data[key]) == 1:
+                    data[key] = data[key][0]
+            if isinstance(data[key], datetime):
                 continue
 
-            # save original for further re-parsing
-            data[f"{key}__unparsed"] = data[key]
+            # save original for further re-extracting
+            if f"{key}__unextracted" not in data:
+                data[f"{key}__unextracted"] = data[key]
+
             value = None
             patterns = ensure_list(patterns)
             for pattern in patterns:
-                pattern = re.compile(pattern)  # yaml foo
+                pattern = re.compile(pattern)
                 try:
-                    value = re_first(pattern, data[key])
+                    value = re_group(pattern, data[f"{key}__unextracted"], key)
                     if value is not None:
                         data[key] = value
                         break
@@ -159,7 +161,7 @@ def clean(context, data, emit=True):
             if value is None:
                 context.log.warning(
                     "Can't extract metadata for `%s`: [%s] %s"
-                    % (key, pattern.pattern, data[key])
+                    % (key, pattern.pattern, data[f"{key}__unextracted"])
                 )
                 data[key] = None
 
@@ -168,9 +170,21 @@ def clean(context, data, emit=True):
             if data.get(key) in values:
                 data[key] = values[data[key]]
 
+        # more parsing
+        for key, parser in ensure_dict(context.params.get("parsers")).items():
+            if key in data:
+                data[f"{key}__unparsed"] = data[key]
+                data[key] = parse_metadata(data[f"{key}__unparsed"], parser)
+
     # ensure document id metadata
     if "reference" in data:
-        data["reference"] = re_first(r"\d{1,2}\/\d+", data["reference"])
+        try:
+            data["reference"] = re_first(r"\d{1,2}\/\d+", data["reference"])
+        except RegexError:
+            context.emit_warning(
+                MetaDataError(f"Can not extract reference from `{data['reference']}`")
+            )
+            return
         data["legislative_term"], data["document_id"] = data["reference"].split("/")
     elif "document_id" in data and "legislative_term" in data:
         data["reference"] = "{legislative_term}/{document_id}".format(**data)
@@ -192,9 +206,6 @@ def clean(context, data, emit=True):
     for key in DELETE_KEYS:
         if key in data:
             del data[key]
-    for key in LISTISH_KEYS:
-        if key in data:
-            data[key] = ensure_list(data[key])
     parserkwargs = ensure_dict(context.params.get("dateparser"))
     for key in DATE_KEYS:
         if key in data:
@@ -230,5 +241,10 @@ def parse_json(context, data):
     res = context.http.rehash(data)
     jsondata = clean_dict(flatten_dict(res.json))
     for key, path in ensure_dict(context.params).items():
-        data[key] = jsondata[path]
+        try:
+            data[key] = jsondata[path]
+        except KeyError:
+            context.emit_warning(
+                f"Can not extract `{path}` from {pretty_dict(jsondata)}"
+            )
     context.emit(data=data)

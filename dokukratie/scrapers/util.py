@@ -55,6 +55,17 @@ def re_first(pattern, string):
         raise RegexError(str(e), string)
 
 
+def re_group(pattern, string, group):
+    try:
+        m = re.match(pattern, string)
+        return m.group(group)
+    except Exception:
+        try:
+            return re_first(pattern, string)
+        except Exception as e:
+            raise RegexError(str(e), string)
+
+
 def get_value_from_xp(html, path):
     part = html.xpath(path)
     if isinstance(part, list) and part:
