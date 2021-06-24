@@ -178,7 +178,13 @@ def clean(context, data, emit=True):
 
     # ensure document id metadata
     if "reference" in data:
-        data["reference"] = re_first(r"\d{1,2}\/\d+", data["reference"])
+        try:
+            data["reference"] = re_first(r"\d{1,2}\/\d+", data["reference"])
+        except RegexError:
+            context.emit_warning(
+                MetaDataError(f"Can not extract reference from `{data['reference']}`")
+            )
+            return
         data["legislative_term"], data["document_id"] = data["reference"].split("/")
     elif "document_id" in data and "legislative_term" in data:
         data["reference"] = "{legislative_term}/{document_id}".format(**data)
