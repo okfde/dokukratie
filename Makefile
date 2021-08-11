@@ -8,12 +8,16 @@ bb: bb.pull bb.run_prod bb.mmmeta bb.upload
 be: be.pull be.run_prod be.mmmeta be.upload
 bw: bw.pull bw.run_prod bw.mmmeta bw.upload
 by: by.pull by.run_prod by.mmmeta by.upload
+hb: hb.pull hb.run_prod hb.mmmeta hb.upload
 hh: hh.pull hh.run_prod hh.mmmeta hh.upload
 he: he.pull he.run_prod he.mmmeta he.upload
 mv: mv.pull mv.run_prod mv.mmmeta mv.upload
 ni: ni.pull ni.run_prod ni.mmmeta ni.upload
 nw: nw.pull nw.run_prod nw.mmmeta nw.upload
 rp: rp.pull rp.run_prod rp.mmmeta rp.upload
+sh: sh.pull sh.run_prod sh.mmmeta sh.upload
+sl: sl.pull sl.run_prod sl.mmmeta sl.upload
+sn: sn.pull sn.run_prod sn.mmmeta sn.upload
 st: st.pull st.run_prod st.mmmeta st.upload
 th: th.pull th.run_prod th.mmmeta th.upload
 
@@ -22,14 +26,6 @@ dip: dip.pull dip.run_prod dip.mmmeta dip.upload
 parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
-
-# all the things
-config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
-pull.states: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
-mmmeta.states: bb.mmmeta bw.mmmeta by.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta st.mmmeta th.mmmeta
-upload.states: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
-push.states: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
-sync.states: states.config states.pull states.mmmeta states.upload
 
 he.run_prod:
 	# don't ddos hessen

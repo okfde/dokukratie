@@ -1,0 +1,123 @@
+name: sl
+description: Saarland - Landtagsdokumente
+
+document_types:
+  minor_interpellation: Anfrage
+  # major_interpellation: Große Anfrage
+
+publisher:
+  type: parliament
+  name: Landtag des Saarlandes
+  url: https://www.landtag-saar.de
+  jurisdiction:
+    id: sl
+    name: Saarland
+
+scraper:
+  url: https://www.landtag-saar.de
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.base:init
+    params:
+      url: https://www.landtag-saar.de/umbraco/aawSearchSurfaceController/SearchSurface/GetSearchResults/
+      document_types:
+        - minor_interpellation
+      legislative_terms: 14
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.operations:post
+    params:
+      json:
+        CurrentSearchTab: 1
+        Filter:
+          # StartTime: /Date(1254441600000)/
+          # EndTime: /Date(1628640000000)/
+          Periods:
+          - 14
+          - 15
+          - 16
+        KendoFilter:
+          filters:
+          - filters:
+            - field: DocumentType
+              operator: contains
+              value: Anfrage
+            logic: or
+          logic: and
+        OnlyTitle: false
+        Pageination:
+          Skip: 0
+          Take: 10
+        Sections:
+          Print: true
+        Sort:
+          SortType: 0
+          SortValue: 0
+        Value: ''
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.operations:parse_json
+    params:
+      jq: >
+        .Items[] | {
+          title: .Title,
+          published_at: .PublicDate,
+          reference: .DocumentNumber,
+          legislative_term: .Legislative,
+          originators: .DocumentAuthor,
+          answerers: .Publisher,
+          document_type: .DocumentType,
+          operation_id: .OperationsList.FileList[0].Id}
+    handle:
+      pass: fetch_detail
+
+  fetch_detail:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      rewrite:
+        method: template
+        data: /vorgaenge/{{ operation_id }}
+      skip_incremental:
+        target:
+          stage: store
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - (.//div[@class="operation-file-download"])[last()]
+      meta:
+        originators: .//div[@class="document-author"]
+        answerers: .//div[@class="document-publisher"]
+    handle:
+      fetch: download
+      store: clean
+
+  download:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      rewrite:
+        method: replace
+        data: ["PDF", "DownloadFile.ashx"]
+    handle:
+      pass: parse_detail
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extractors:
+        published_at: \d+
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

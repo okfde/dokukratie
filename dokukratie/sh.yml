@@ -1,0 +1,83 @@
+name: sh
+description: Landtagsinformationssystem Schleswig-Holstein
+
+publisher:
+  type: parliament
+  name: Schleswig-Holsteinischer Landtag
+  url: http://www.landtag.ltsh.de/
+  jurisdiction:
+    id: sh
+    name: Schleswig-Holstein
+
+document_types:
+  minor_interpellation: kleine
+  # major_interpellation: Anfragen\\Interpellation
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.base:init
+    params:
+      url_template: http://lissh.lvn.parlanet.de/cgi-bin/starfinder/0?path=lisshfl.txt&id=FASTLINK&pass=&search=WP%3d{{ legislative_term }}+AND+dtyp%3dkleine&format=WEBKURZFL
+      # dateformat: "%d.%m.%Y"
+      # param_names:
+      #   document_type: suchvorgangsart[]
+      #   legislative_term: wahlperiodeid[]
+      #   start_date: erfassungsdatum[start]
+      #   end_date: erfassungsdatum[end]
+      document_types:
+        - minor_interpellation
+        # - major_interpellation
+      legislative_terms:
+        - 19
+        - 18
+        - 17
+        - 16
+        - 15
+        - 14
+        - 13
+        - 12
+        - 11
+        - 10
+    handle:
+      pass: fetch
+
+  fetch:
+    method: dokukratie.scrapers.operations:fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      skip_incremental:
+        target:
+          stage: store
+      store:
+        mime_group: documents
+      include_paths:
+        - ".//td[2]"  # pdf download url
+      items: ".//table[@class='tabcol']//tr"
+      meta:
+        source_url: ".//td[3]/a/@href"
+        title: ".//td[2]/b/text()"
+        reference: ".//td[2]/a/text()"
+        metadata: ".//td[2]"
+    handle:
+      fetch: fetch
+      store: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    params:
+      extract:
+        source: metadata
+        patterns:
+          - .*Kleine\s+Anfrage\s+(?P<originators>.*)\s*und\s+Antwort\s+(?P<answerers>.+)\s+(?P<published_at>[\d\.]+)\s+Drucksache
+          - .*Kleine\s+Anfrage\s+(?P<originators>.*)\s*und\s+Antwort\s+(?P<answerers>.+)\s+Drucksache
+      dateparser:
+        dayfirst: true
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

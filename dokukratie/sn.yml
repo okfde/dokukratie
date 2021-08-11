@@ -1,0 +1,155 @@
+name: sn
+description: Parlamentsdokumentation EDAS Sachsen
+
+document_types:
+  minor_interpellation: KlAnfr
+  major_interpellation: GrAnfr
+
+publisher:
+  type: parliament
+  name: Sächsischer Landtag
+  url: https://www.landtag.sachsen.de/de
+  jurisdiction:
+    id: sn
+    name: Sachsen
+
+scraper:
+  url: https://edas.landtag.sachsen.de
+
+pipeline:
+  init:
+    method: dokukratie.scrapers.base:init
+    params:
+      url: https://edas.landtag.sachsen.de
+      document_types:
+        - minor_interpellation
+      legislative_terms: 7
+    handle:
+      pass: init_session
+
+  # init session cookie
+  init_session:
+    method: dokukratie.scrapers.operations:fetch
+    handle:
+      pass: init_form
+
+  init_form:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      url: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/suchmaske_einfach.aspx
+      headers:
+        Referer: https://edas.landtag.sachsen.de/Header.htm
+    handle:
+      pass: search
+
+  search:
+    method: dokukratie.scrapers.operations:post
+    params:
+      form: .//form[@id="aspnetForm"]
+      data:
+        __CALLBACKID: ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback
+        __CALLBACKPARAM: "c0:"
+      #   __EVENTARGUMENT: Click
+      #   __EVENTTARGET: ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$btn_EinfSuche
+        ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfDokartSuchmaskeElement_ec_VI: Drs
+        ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfDoktyp_ec_VI: KlAnfr
+      # ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$tf_EinfDoknrVon$ec: 1
+      # ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$tf_EinfDoknrBis$ec: 1000
+      ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfOrderBy_logisch_ec_VI: Eingangsdatum_desc
+      headers:
+        Referer: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/suchmaske_einfach.aspx
+    handle:
+      pass: fetch_results
+
+  # result list is created for the current session by the previous post request
+  fetch_results:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      url: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/trefferliste.aspx?NavSeite=1
+      headers:
+        Referer: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/suchmaske_einfach.aspx
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      parse_html: false
+      emit: true
+      items: './/td[@class="dxdvItem_EDAS dx-al"]'
+      meta:
+        reference: './/td[@class="text"]/a[contains(text(), "Drs")]'
+        document_nr: './/td[@class="text"]/a[contains(text(), "Drs")]'
+        title: './/td[@class="text"]/b'
+        originators: './/td[@class="text"]/b/..'
+        answerers: './/td[@class="text"]/b/..'
+        published_at: './/td[@class="text"]/b/..'
+      extractors:
+        document_nr: \/(\d+)
+    handle:
+      pass: fetch_detail
+
+  fetch_detail:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      headers:
+        Referer: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/suchmaske_einfach.aspx
+      rewrite:
+        method: template
+        data: /parlamentsdokumentation/parlamentsarchiv/treffer_vorgang.aspx?VorgangButton=y&dok_art=Drs&leg_per={{ legislative_term }}&refferer=&index=11&dok_nr={{ document_nr }}
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      parse_html: false
+      emit: true
+      meta:
+        originators: "(.//a[contains(@href, 'showDocumentByID')]/text())[1]"
+        answerers: "(.//a[contains(@href, 'showDocumentByID')]/text())[2]"
+        published_at: "(.//a[contains(@href, 'showDocumentByID')]/text())[2]"
+        document_id: "(.//a[contains(@href, 'showDocumentByID')]/@href)[2]"
+      extractors:
+        document_id: (\d+)\)
+    handle:
+      pass: fetch_viewer
+
+  fetch_viewer:
+    method: dokukratie.scrapers.operations:fetch
+    params:
+      rewrite:
+        method: template
+        data: /viewer.aspx?dok_nr={{ document_nr }}&dok_art=Drs&leg_per=7&pos_dok=&dok_id={{ document_id }}
+    handle:
+      pass: parse_viewer
+
+  parse_viewer:
+    method: dokukratie.scrapers.operations:parse
+    params:
+      include_paths: .//frame[@name='navigation']/@src
+    handle:
+      fetch: fetch_inner_viewer
+
+  fetch_inner_viewer:
+    method: dokukratie.scrapers.operations:fetch
+    handle:
+      pass: parse_inner_viewer
+
+  parse_inner_viewer:
+    method: dokukratie.scrapers.operations:parse
+    handle:
+      pass: download
+
+  download:
+    method: dokukratie.scrapers.operations:fetch
+    handle:
+      pass: clean
+
+  clean:
+    method: dokukratie.scrapers.operations:clean
+    handle:
+      pass: store
+
+  store:
+    method: dokukratie.scrapers.operations:store

@@ -78,6 +78,7 @@ class Test(unittest.TestCase):
                 "document_type",
                 "publisher",
                 "published_at",
+                # "metadata",
             ):
                 self.assertIn(key, data)
             self.assertIsInstance(dateparse(data["published_at"]), datetime)
@@ -117,6 +118,12 @@ class Test(unittest.TestCase):
         self.run_scraper("by", document_types="minor_interpellation")
         # self.run_scraper("by", document_types="major_interpellation")
 
+    def test_hb(self):
+        self.run_scraper(
+            "hb", document_types="minor_interpellation", start_date="2021-05-01"
+        )
+        # self.run_scraper("hh", document_types="major_interpellation")
+
     def test_hh(self):
         self.run_scraper("hh", document_types="minor_interpellation")
         # self.run_scraper("hh", document_types="major_interpellation")
@@ -144,9 +151,21 @@ class Test(unittest.TestCase):
         self.run_scraper("rp", document_types="minor_interpellation")
         # self.run_scraper("rp", document_types="major_interpellation")
 
+    def test_sh(self):
+        self.run_scraper("sh", document_types="minor_interpellation")
+        # self.run_scraper("sh", document_types="major_interpellation")
+
     def test_st(self):
         self.run_scraper("st", document_types="minor_interpellation")
         # self.run_scraper("st", document_types="major_interpellation")
+
+    def test_sl(self):
+        self.run_scraper("sl", document_types="minor_interpellation")
+        # self.run_scraper("sl", document_types="major_interpellation")
+
+    def test_sn(self):
+        self.run_scraper("sn", document_types="minor_interpellation")
+        # self.run_scraper("sn", document_types="major_interpellation")
 
     def test_th(self):
         self.run_scraper("th", document_types="minor_interpellation")
