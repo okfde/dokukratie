@@ -71,7 +71,7 @@ pipeline:
     method: dokukratie.scrapers.starweb:parse_results
     params:
       item: './/tbody[@name="RecordRepeater"]/tr'
-      download_url: './/td/a[matches(@href, ".*\/dokumente\/.*\.pdf$")'
+      download_url: './/td/a[contains(@href, "/dokumente/")]'
       next_page:
         xpath: './/div[@id="seitenzahl"]//span[@name="NextRecsConditional"]'
         formdata:
@@ -105,5 +105,3 @@ pipeline:
 
   store:
     method: dokukratie.scrapers.operations:store
-    handle:
-      pass: store

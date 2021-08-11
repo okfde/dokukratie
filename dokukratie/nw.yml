@@ -26,7 +26,7 @@ pipeline:
       legislative_terms: 17
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       param_names:
         document_type: doktyp
         legislative_term: wp

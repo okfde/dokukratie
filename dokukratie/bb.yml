@@ -4,7 +4,7 @@ description: Parlamentsdokumentation Brandenburg
 publisher:
   type: parliament
   name: Landtag Brandenburg
-  url: https://www.brandenburg.de/
+  url: https://www.landtag.brandenburg.de
   jurisdiction:
     id: bb
     name: Brandenburg
@@ -94,8 +94,10 @@ pipeline:
     params:
       extractors:
         published_at: \d{2}\.\d{2}\.\d{4}
-        originators: ([\w\s(),]+)(?=\s\d)
+        originators: ([\w\s(),\.]+)(?=\s\d)
         answerers: Antwort\s\((\w+)\)
+      # parsers:
+      #   originators: dokukratie.parsers.originators:parse
       dateparser:
         dayfirst: true
     handle:

@@ -27,7 +27,7 @@ pipeline:
       legislative_terms: 18
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       url: https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/lissh.web
       dateformat: "%d.%m.%Y"
     handle:
@@ -91,12 +91,18 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
-        # originators: .*Antwort\s+(.*)\sund\sAntwort.*
-        # answerer: .*\sund\sAntwort\s(.+?(?=\s\d)).*
       dateparser:
         dayfirst: true
+      extractors:
+        published_at: \d{2}\.\d{2}\.\d{4}
+        originators:
+          - (Kleine|Große)\s+Anfrage(?:\s+zur\s+.*\s+Beantwortung)?\s+(?P<originators>.+)\s+\d+\.
+          - (Kleine|Große)\s+Anfrage\s+mit\s+Antwort\s+(?P<originators>.+)\s+\d+\.
+        answerers:
+          - (?:Ergänzung)?\s?Antwort\s+(?P<answerers>[^\d]+)\s+(\d+\.\d+\.\d+)
+          - (Kleine|Große)\s+Anfrage(?:\s+zur\s+.*\s+Beantwortung)\s+mit\s+Antwort\s+(?P<originators>.+)\s+\d+\.
+      parsers:
+        originators: dokukratie.parsers.originators:parse
     handle:
       pass: store
 

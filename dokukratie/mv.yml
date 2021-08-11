@@ -25,7 +25,7 @@ pipeline:
       legislative_terms: 7
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       dateformat: "%d.%m.%Y"
     handle:
       pass: search

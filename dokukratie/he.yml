@@ -26,7 +26,7 @@ pipeline:
       legislative_terms: WP20
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       url: http://starweb.hessen.de/starweb/LIS/servlet.starweb?path=LIS/PdPi.web
     handle:
       pass: fetch

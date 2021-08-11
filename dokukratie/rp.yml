@@ -26,7 +26,7 @@ pipeline:
       legislative_terms: 18
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       url: https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web
     handle:
       pass: fetch

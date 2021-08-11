@@ -47,8 +47,9 @@ pipeline:
   parse_json:
     method: dokukratie.scrapers.operations:parse_json
     params:
-      report_id: report_id
-      item_count: item_count
+      extract:
+        report_id: report_id
+        item_count: item_count
     handle:
       pass: fetch_results
 
