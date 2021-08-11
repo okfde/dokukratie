@@ -7,7 +7,7 @@ from memorious.operations.parse import parse_for_metadata
 from .base import BaseScraper
 from .incremental import skip_incremental
 from .util import get_value_from_xp as x
-from .util import pretty_dict, re_first
+from .util import get_form, pretty_dict, re_first
 
 
 class StarwebScraper(BaseScraper):
@@ -15,20 +15,7 @@ class StarwebScraper(BaseScraper):
         "key": {"data": "url"},
         "target": {"stage": "store"},
     }
-
-    def get_formdata(self, html, form_xp='.//form[@name="__form"]'):
-        """
-        return action, data
-        """
-        form = html.find(form_xp)
-        if form is None:
-            self.context.log.error(f"Cannot find form: `{form_xp}`")
-            self.context.crawler.cancel()
-            return None, None
-        return x(form, "@action"), {
-            **{i.name: i.value for i in form.findall(".//input")},
-            **{i.name: i.value for i in form.findall(".//select")},
-        }
+    form_xp = './/form[@name="__form"]'
 
     def emit_search(self, data):
         """
@@ -41,7 +28,7 @@ class StarwebScraper(BaseScraper):
 
         # formdata from existing session
         res = self.context.http.rehash(data)
-        form_url, formdata = self.get_formdata(res.html)
+        form_url, formdata = get_form(self.context, res.html, self.form_xp)
 
         if form_url is not None and formdata is not None:
             if "formdata" in data:
@@ -111,7 +98,7 @@ class StarwebScraper(BaseScraper):
         next_page = self.context.params.get("next_page")
         if next_page:
             if res.html.xpath(next_page["xpath"]):
-                _, data["formdata"] = self.get_formdata(res.html)
+                _, data["formdata"] = get_form(self.context, res.html, self.form_xp)
                 data["formdata"].update(ensure_dict(next_page.get("formdata")))
                 page = data.get("page", 1) + 1
                 data["page"] = page
@@ -125,7 +112,7 @@ class StarwebScraper(BaseScraper):
         """
 
         res = self.context.http.rehash(data)
-        form_url, formdata = self.get_formdata(res.html)
+        form_url, formdata = get_form(self.context, res.html, self.form_xp)
         if form_url is not None and formdata is not None:
             self.context.log.debug(f"Using formdata: {pretty_dict(formdata)}")
             formdata.update(ensure_dict(self.context.params.get("formdata")))

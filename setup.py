@@ -18,5 +18,6 @@ setup(
         "mmmeta",
         "furl",
         "pyicu",
+        "jq",
     ],
 )

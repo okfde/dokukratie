@@ -1,7 +1,7 @@
-import re
 from datetime import datetime
 from itertools import product
 
+import jq
 from banal import clean_dict, ensure_dict, ensure_list
 from furl import furl
 from memorious.helpers.rule import Rule
@@ -14,9 +14,9 @@ from ..parsers import parse as parse_metadata
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
 from .mmmeta import get_start_date
-from .util import ensure_date, flatten_dict
+from .util import ensure_date, extract, flatten_dict, generate_url
 from .util import get_env_or_context as _geoc
-from .util import pretty_dict, re_first, re_group
+from .util import get_form, parse_html_item, pretty_dict, re_first
 
 
 def init(context, data=None):
@@ -60,8 +60,12 @@ def init(context, data=None):
             }
         )
         context.log.debug(f"Using parameters: {pretty_dict(data)}")
-        url = context.params.get("url")
-        if url:
+        url_template = context.params.get("url_template")
+        if url_template is not None:
+            url = generate_url(url_template, data)
+        else:
+            url = context.params.get("url")
+        if url is not None:
             fu = furl(url)
             for key, value in ensure_dict(context.params.get("urlparams")).items():
                 fu.args[key] = value
@@ -76,20 +80,39 @@ def init(context, data=None):
 def parse(context, data):
     """
     an extended parse to handle incremental scraping
+    and to parse listings (config: items)
     """
+
+    should_emit = context.params.get("emit") is True
+    should_parse_html = context.params.get("parse_html", True) is True
 
     if not skip_incremental(context, data):
         with context.http.rehash(data) as result:
             if result.html is not None:
-                # Get extra metadata from the DOM
-                parse_for_metadata(context, data, result.html)
-                # maybe data is updated with unique identifier for incremental skip
-                if not skip_incremental(context, data):
-                    parse_html(context, data, result)
+                # items listing scraping
+                if "items" in context.params:
+                    for item in result.html.xpath(context.params["items"]):
+                        item_data = {k: v for k, v in data.items()}
+                        parse_for_metadata(context, item_data, item)
+                        extract(context, item_data)
+                        if not skip_incremental(context, item_data):
+                            if should_parse_html:
+                                parse_html_item(context, item_data, item)
+                            if should_emit:
+                                context.emit(data=item_data)
+                else:
+                    # Get extra metadata from the DOM
+                    parse_for_metadata(context, data, result.html)
+                    extract(context, data)
+                    # maybe data is updated with unique identifier for incremental skip
+                    if not skip_incremental(context, data) and should_parse_html:
+                        parse_html(context, data, result)
 
             rules = context.params.get("store") or {"match_all": {}}
             if Rule.get_rule(rules).apply(result):
                 context.emit(rule="store", data=data)
+            if should_emit:
+                context.emit(data=data)
 
 
 def fetch(context, data):
@@ -97,6 +120,32 @@ def fetch(context, data):
     an extended fetch to be able to skip_incremental based on passed data dict
     and reduce fetches while testing
     """
+    for key, value in ensure_dict(context.params.get("headers")).items():
+        context.http.session.headers[key] = value
+    context.log.debug(f"Headers: {pretty_dict(context.http.session.headers)}")
+    context.log.debug(f"Cookies: {pretty_dict(context.http.session.cookies)}")
+
+    url = context.params.get("url") or data.get("url")
+
+    if "rewrite" in context.params:
+        method = context.params["rewrite"]["method"]
+        method_data = context.params["rewrite"]["data"]
+        if method == "replace":
+            url = url.replace(*method_data)
+        if method == "template":
+            url = generate_url(method_data, data)
+
+    if url is None:
+        context.log.error("No url specified.")
+        return
+    else:
+        data["url"] = url
+
+    f = furl(data["url"])
+    if f.scheme is None:
+        base_url = context.crawler.config["scraper"]["url"]
+        data["url"] = furl(base_url).join(f).url
+
     if not skip_incremental(context, data):
         memorious_fetch(context, data)
 
@@ -133,37 +182,7 @@ def clean(context, data, emit=True):
             )
 
         # extract some extra data
-        for key, patterns in ensure_dict(context.params.get("extractors")).items():
-            if key not in data:
-                continue
-            if isinstance(data[key], list):  # FIXME migration
-                if len(data[key]) == 1:
-                    data[key] = data[key][0]
-            if isinstance(data[key], datetime):
-                continue
-
-            # save original for further re-extracting
-            if f"{key}__unextracted" not in data:
-                data[f"{key}__unextracted"] = data[key]
-
-            value = None
-            patterns = ensure_list(patterns)
-            for pattern in patterns:
-                pattern = re.compile(pattern)
-                try:
-                    value = re_group(pattern, data[f"{key}__unextracted"], key)
-                    if value is not None:
-                        data[key] = value
-                        break
-                except RegexError:
-                    pass
-            # still nothing found:
-            if value is None:
-                context.log.warning(
-                    "Can't extract metadata for `%s`: [%s] %s"
-                    % (key, pattern.pattern, data[f"{key}__unextracted"])
-                )
-                data[key] = None
+        extract(context, data)
 
         # clean some values
         for key, values in ensure_dict(context.params.get("values")).items():
@@ -234,17 +253,73 @@ def store(context, data):
 
 def parse_json(context, data):
     """
-    parse a json response and yield data dict based on config
+    parse a json response and emit data dict based on config:
 
-    key path are dot notation
+    extract: new key, source key (dot notation) for extracting data
+    yield: if set, iterate through this key and emit for every item
+
+    new implementation: use `jq`!
     """
     res = context.http.rehash(data)
     jsondata = clean_dict(flatten_dict(res.json))
-    for key, path in ensure_dict(context.params).items():
-        try:
-            data[key] = jsondata[path]
-        except KeyError:
-            context.emit_warning(
-                f"Can not extract `{path}` from {pretty_dict(jsondata)}"
-            )
-    context.emit(data=data)
+
+    if "jq" in context.params:
+        pattern = context.params["jq"]
+        res = jq.compile(pattern).input(jsondata)
+        for item in res.all():
+            context.emit(data={**data, **item})
+        return
+
+    def _extract(jsondata=jsondata, data=data):
+        for key, path in ensure_dict(context.params.get("extract")).items():
+            try:
+                data[key] = jsondata[path]
+            except KeyError:
+                context.emit_warning(
+                    f"Can not extract `{path}` from {pretty_dict(jsondata)}"
+                )
+        return data
+
+    if "yield" in context.params:
+        for item in ensure_list(jsondata.get(context.params["yield"])):
+            context.emit(data={**data, **_extract(item)})
+        return
+
+    context.emit(data=extract())
+
+
+def post(context, data):
+    """
+    do a post request with json data
+    """
+    url = data.get("url", context.params.get("url"))
+
+    for key, value in ensure_dict(context.params.get("headers")).items():
+        context.http.session.headers[key] = value
+    context.log.debug(f"Headers: {pretty_dict(context.http.session.headers)}")
+
+    if url:
+        json_data = clean_dict(ensure_dict(context.params.get("json")))
+
+        # direct json post request
+        if json_data:
+            context.log.debug(f"Post data: {pretty_dict(json_data)}")
+            context.log.debug(f"Post url: {url}")
+            res = context.http.post(url, json=json_data)
+            context.emit(data={**data, **res.serialize()})
+            return
+
+        # handle form if any
+        post_data = clean_dict(ensure_dict(context.params.get("data")))
+        form = context.params.get("form")
+
+        if form:
+            res = context.http.rehash(data)
+            action, formdata = get_form(context, res.html, form)
+            url = furl(url).join(action).url
+            post_data = {**formdata, **post_data}
+
+        context.log.debug(f"Post data: {pretty_dict(post_data)}")
+        context.log.debug(f"Post url: {url}")
+        res = context.http.post(url, data=post_data)
+        context.emit(data={**data, **res.serialize()})
