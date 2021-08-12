@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from itertools import product
 
@@ -10,10 +11,10 @@ from memorious.operations.parse import parse_for_metadata, parse_html
 from memorious.operations.store import directory as memorious_store
 from mmmeta.util import casted_dict
 
-from ..parsers import parse as parse_metadata
 from .exceptions import MetaDataError, RegexError
 from .incremental import skip_incremental
 from .mmmeta import get_start_date
+from .pagination import get_paginated_url, paginate
 from .util import ensure_date, extract, flatten_dict, generate_url
 from .util import get_env_or_context as _geoc
 from .util import get_form, parse_html_item, pretty_dict, re_first
@@ -108,6 +109,7 @@ def parse(context, data):
                     if not skip_incremental(context, data) and should_parse_html:
                         parse_html(context, data, result)
 
+            paginate(context, data, result.html)
             rules = context.params.get("store") or {"match_all": {}}
             if Rule.get_rule(rules).apply(result):
                 context.emit(rule="store", data=data)
@@ -125,7 +127,7 @@ def fetch(context, data):
     context.log.debug(f"Headers: {pretty_dict(context.http.session.headers)}")
     context.log.debug(f"Cookies: {pretty_dict(context.http.session.cookies)}")
 
-    url = context.params.get("url") or data.get("url")
+    url = get_paginated_url(context, data)
 
     if "rewrite" in context.params:
         method = context.params["rewrite"]["method"]
@@ -153,9 +155,9 @@ def fetch(context, data):
 DELETE_KEYS = ("page", "formdata")
 
 # don't apply typing here:
-UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference")
+UNCASTED_KEYS = ("modified_at", "retrieved_at", "reference", "interpellation_reference")
 
-DATE_KEYS = ("published_at",)
+DATE_KEYS = ("published_at", "interpellation_date")
 
 
 def clean(context, data, emit=True):
