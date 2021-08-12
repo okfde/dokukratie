@@ -101,8 +101,10 @@ pipeline:
         answerers:
           - (?:Ergänzung)?\s?Antwort\s+(?P<answerers>[^\d]+)\s+(\d+\.\d+\.\d+)
           - (Kleine|Große)\s+Anfrage(?:\s+zur\s+.*\s+Beantwortung)\s+mit\s+Antwort\s+(?P<originators>.+)\s+\d+\.
-      parsers:
-        originators: dokukratie.parsers.originators:parse
+      parser:
+        originators:
+          split: ","
+          pattern: (?P<name>.*)\((?P<party>.*)\)
     handle:
       pass: store
 

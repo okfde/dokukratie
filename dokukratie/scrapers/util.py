@@ -129,20 +129,20 @@ def generate_url(template, data):
 
 def extract(context, data):
     if "extract" in context.params:  # new implementation
-        patterns = ensure_list(context.params["extract"]["patterns"])
-        source_key = context.params["extract"]["source"]
-        source = data.get(source_key)
-        if source is None:
-            context.log.warning("No source data found")
-            return
-        if source_key != "metadata":  # FIXME migration
-            data["metadata"] = data[source_key]
-        for pattern in patterns:
-            pattern = re.compile(pattern)  # yaml escaping & stuff
-            m = re.match(pattern, source)
-            if m is not None:
-                data.update(m.groupdict())
-                break
+        for source_key, patterns in ensure_dict(context.params["extract"]).items():
+            patterns = ensure_list(patterns)
+            source = data.get(source_key)
+            if source is None:
+                context.log.warning("No source data found")
+                return
+            if source_key != "metadata":  # FIXME migration
+                data["metadata"] = data[source_key]
+            for pattern in patterns:
+                pattern = re.compile(pattern)  # yaml escaping & stuff
+                m = re.match(pattern, source)
+                if m is not None:
+                    data.update(m.groupdict())
+                    break
 
     else:
         for key, patterns in ensure_dict(context.params.get("extractors")).items():

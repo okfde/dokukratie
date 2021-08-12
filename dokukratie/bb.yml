@@ -96,8 +96,10 @@ pipeline:
         published_at: \d{2}\.\d{2}\.\d{4}
         originators: ([\w\s(),\.]+)(?=\s\d)
         answerers: Antwort\s\((\w+)\)
-      # parsers:
-      #   originators: dokukratie.parsers.originators:parse
+      parser:
+        originators:
+          split: ","
+          pattern: (?P<name>.*)\((?P<party>.*)\)
       dateparser:
         dayfirst: true
     handle:

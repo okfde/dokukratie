@@ -184,16 +184,19 @@ def clean(context, data, emit=True):
         # extract some extra data
         extract(context, data)
 
-        # clean some values
+        # rewrite some values
         for key, values in ensure_dict(context.params.get("values")).items():
             if data.get(key) in values:
                 data[key] = values[data[key]]
 
         # more parsing
-        for key, parser in ensure_dict(context.params.get("parsers")).items():
+        for key, parser in ensure_dict(context.params.get("parse")).items():
             if key in data:
-                data[f"{key}__unparsed"] = data[key]
-                data[key] = parse_metadata(data[f"{key}__unparsed"], parser)
+                pat = re.compile(parser["pattern"])
+                data[key] = [
+                    re.match(pat, value).groupdict()
+                    for value in data[key].split(parser.get("split"))
+                ]
 
     # ensure document id metadata
     if "reference" in data:
@@ -285,7 +288,7 @@ def parse_json(context, data):
             context.emit(data={**data, **_extract(item)})
         return
 
-    context.emit(data=extract())
+    context.emit(data=_extract())
 
 
 def post(context, data):
