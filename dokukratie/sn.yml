@@ -17,6 +17,7 @@ scraper:
   url: https://edas.landtag.sachsen.de
 
 pipeline:
+  # emit scrape criteria
   init:
     method: dokukratie.scrapers.base:init
     params:
@@ -53,6 +54,8 @@ pipeline:
       #   __EVENTTARGET: ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$btn_EinfSuche
         ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfDokartSuchmaskeElement_ec_VI: Drs
         ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfDoktyp_ec_VI: KlAnfr
+        ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$sb_EinfDoktyp$ec$DDD$L: KlAnfr
+        ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$sb_EinfDoktyp$ec: KlAnfr - Kleine Anfrage
       # ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$tf_EinfDoknrVon$ec: 1
       # ctl00$masterContentCallback$content$suchmaske$tblSearch$tabSuche$panelUmSuchmaskeEinfach$suchmaskeEinfachCallback$tf_EinfDoknrBis$ec: 1000
       ctl00_masterContentCallback_content_suchmaske_tblSearch_tabSuche_panelUmSuchmaskeEinfach_suchmaskeEinfachCallback_sb_EinfOrderBy_logisch_ec_VI: Eingangsdatum_desc
@@ -66,6 +69,8 @@ pipeline:
     method: dokukratie.scrapers.operations:fetch
     params:
       url: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/trefferliste.aspx?NavSeite=1
+      pagination:
+        param: NavSeite
       headers:
         Referer: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/suchmaske_einfach.aspx
     handle:
@@ -81,12 +86,13 @@ pipeline:
         reference: './/td[@class="text"]/a[contains(text(), "Drs")]'
         document_nr: './/td[@class="text"]/a[contains(text(), "Drs")]'
         title: './/td[@class="text"]/b'
-        originators: './/td[@class="text"]/b/..'
-        answerers: './/td[@class="text"]/b/..'
-        published_at: './/td[@class="text"]/b/..'
       extractors:
         document_nr: \/(\d+)
+      pagination:
+        total: './/input[@id="ctl00_masterContentCallback_content_tf_AnzahlBis_ec_I"]/@value'
+        per_page: 20
     handle:
+      next_page: fetch_results
       pass: fetch_detail
 
   fetch_detail:
@@ -106,9 +112,8 @@ pipeline:
       parse_html: false
       emit: true
       meta:
-        originators: "(.//a[contains(@href, 'showDocumentByID')]/text())[1]"
-        answerers: "(.//a[contains(@href, 'showDocumentByID')]/text())[2]"
-        published_at: "(.//a[contains(@href, 'showDocumentByID')]/text())[2]"
+        metadata_originators: "(.//a[contains(@href, 'showDocumentByID')]//text())[1]"
+        metadata_answerers: "(.//a[contains(@href, 'showDocumentByID')]//text())[2]"
         document_id: "(.//a[contains(@href, 'showDocumentByID')]/@href)[2]"
       extractors:
         document_id: (\d+)\)
@@ -120,24 +125,19 @@ pipeline:
     params:
       rewrite:
         method: template
-        data: /viewer.aspx?dok_nr={{ document_nr }}&dok_art=Drs&leg_per=7&pos_dok=&dok_id={{ document_id }}
+        data: /viewer/viewer_navigation.aspx?dok_nr={{ document_nr }}&dok_art=Drs&leg_per=7&pos_dok=&dok_id={{ document_id }}
     handle:
       pass: parse_viewer
 
   parse_viewer:
     method: dokukratie.scrapers.operations:parse
     params:
-      include_paths: .//frame[@name='navigation']/@src
-    handle:
-      fetch: fetch_inner_viewer
-
-  fetch_inner_viewer:
-    method: dokukratie.scrapers.operations:fetch
-    handle:
-      pass: parse_inner_viewer
-
-  parse_inner_viewer:
-    method: dokukratie.scrapers.operations:parse
+      parse_html: false
+      emit: true
+      meta:
+        url: .//body/@onload
+      extractors:
+        url: .*(?P<url>https.*\.pdf).*
     handle:
       pass: download
 
@@ -148,6 +148,10 @@ pipeline:
 
   clean:
     method: dokukratie.scrapers.operations:clean
+    params:
+      extract:
+        metadata_originators: .*KlAnfr\s+(?P<originators>.*)\s+(?P<interpellation_date>[\d\.]+)\s+Drs\s+(?P<interpellation_reference>[\d\/]+)
+        metadata_answerers: .*Antw\s+(?P<answerers>.*)\s+(?P<published_at>[\d\.]+)\s+Drs\s+(?P<reference>[\d\/]+)
     handle:
       pass: store
 
