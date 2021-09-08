@@ -83,7 +83,7 @@ install.test: install.dev
 %.upload:
 	aws s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
-test:
+test: install.test
 	rm -rf testdata
 	mkdir testdata
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/
