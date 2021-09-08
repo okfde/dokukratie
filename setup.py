@@ -17,6 +17,7 @@ setup(
         "memorious @ git+https://github.com/simonwoerpel/memorious",  # FIXME
         "mmmeta",
         "furl",
+        "packaging",
         "pyicu",
     ],
 )
