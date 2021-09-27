@@ -15,8 +15,7 @@ def search(context, data):
     query = json.loads(query)
     context.log.debug(pretty_dict(query))
 
-    data["headers"]["Referer"] = data["url"]
-    res = context.http.post(context.params["url"], json=query, headers=data["headers"])
+    res = context.http.post(context.params["url"], json=query)
 
     context.log.info("Search [%s]: %s" % (res.status_code, res.url))
     context.emit(data={**data, **res.serialize()})
