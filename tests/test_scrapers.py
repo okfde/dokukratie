@@ -7,8 +7,9 @@ from itertools import product
 
 from banal import clean_dict, ensure_list
 from dateutil.parser import parse as dateparse
+from servicelayer import env
 
-from dokukratie.scrapers.util import ensure_date
+from dokukratie.scrapers.util import ensure_date, pretty_dict
 
 
 def get_latest_meta(scraper_name):
@@ -47,7 +48,7 @@ class Test(unittest.TestCase):
             ensure_list(document_types) or [None],
         ):
             start_date = ensure_date(
-                start_date
+                env.get("START_DATE", start_date)
                 or (
                     self.major_start_date
                     if "major" in (document_type or "")
@@ -78,9 +79,12 @@ class Test(unittest.TestCase):
                 "document_type",
                 "publisher",
                 "published_at",
-                # "metadata",
             ):
                 self.assertIn(key, data)
+            for key in ("type", "name", "url", "jurisdiction"):
+                self.assertIn(key, data["publisher"])
+            for key in ("id", "name"):
+                self.assertIn(key, data["publisher"]["jurisdiction"])
             self.assertIsInstance(dateparse(data["published_at"]), datetime)
             if document_type is not None:
                 self.assertEqual(data["document_type"], document_type)
@@ -91,11 +95,15 @@ class Test(unittest.TestCase):
                 self.assertLessEqual(dateparse(data["published_at"]).date(), end_date)
             if legislative_term is not None:
                 self.assertEqual(data["legislative_term"], legislative_term)
-            # if document_type in ("major_interpellation", "minor_interpellation"):
-            # self.assertIsInstance(data["originators"], list)
-            # self.assertGreaterEqual(len(data["originators"]), 1)
-            # self.assertIsInstance(data["answerers"], list)
-            # self.assertGreaterEqual(len(data["answerers"]), 1)
+
+            print(pretty_dict(data))
+            if "interpellation" in data["document_type"]:
+                self.assertIn("originators", data)
+                self.assertIsInstance(data["originators"], list)
+                self.assertGreaterEqual(len(data["originators"]), 1)
+                self.assertIsInstance(data["originators"][0], dict)
+                self.assertIn("name", data["originators"][0])
+                self.assertIn("answerers", data)
 
     def setUp(self):
         self.start_date = (datetime.now() - timedelta(days=30)).date()
