@@ -17,7 +17,7 @@ pipeline:
   init:
     method: dokukratie.scrapers.base:init
     params:
-      url: https://www.bayern.landtag.de/parlament/dokumente/drucksachen/?dokumentenart=Drucksache&anzahl_treffer=10
+      url: https://www.bayern.landtag.de/parlament/dokumente/drucksachen/?dokumentenart=Drucksache&anzahl_treffer=100
       dateformat: "%d.%m.%Y"
       param_names:
         document_type: suchvorgangsart[]
@@ -27,7 +27,7 @@ pipeline:
       document_types:
         - minor_interpellation
         - major_interpellation
-      legislative_terms: 18
+      legislative_terms: 18  # earliest: 1, but since 5 more metadata
     handle:
       pass: fetch
 
@@ -46,10 +46,9 @@ pipeline:
         - ".//ul[@class='pagination']/li[@class='next']"  # next page
         - ".//table[@id='basisdokument']//a[@class='vorgangDownloadlink'][1]"  # pdf download url
       meta:
-        reference: ".//table[@id='basisdokument']//span[@class='drucksache']"
-        published_at: ".//table[@id='basisdokument']//span[@class='drucksache']"
+        interpellation_raw: ".//table[@id='basisdokument']//span[@class='drucksache']"
         title: ".//table[@id='basisdokument']//span[@class='betreff']"
-        originators: ".//table[@id='dokumente']//tbody[@id='dokumente:tb']/tr/td[2]/text()"
+        originators_raw: ".//table[@id='dokumente']//tbody[@id='dokumente:tb']/tr/td[2]/text()"
     handle:
       fetch: fetch
       store: clean
@@ -57,8 +56,15 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
+      extract:
+        interpellation_raw: .*\s+(?P<reference>\d{1,2}\/\d+)\s+.*\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+      parse:
+        originators:
+          source: originators_raw
+          split: ","
+          patterns: (?P<party>.*)
+      defaults:
+        answerers: Staatsregierung
       dateparser:
         dayfirst: true
     handle:
