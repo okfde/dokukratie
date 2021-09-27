@@ -99,13 +99,18 @@ pipeline:
     method: dokukratie.scrapers.operations:clean
     params:
       extract:
-        interpellation_raw: (?P<originators_raw>[\D]+)\s?(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s?Drucksache\s?(?P<interpellation_reference>\d{1,2}\/\d+)
+        interpellation_raw: (?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s?Drucksache\s?(?P<interpellation_reference>\d{1,2}\/\d+)
         answer_raw: Antwort\s\((?P<answerers>.*)\)\s(?P<published_at>\d{2}\.\d{2}\.\d{4})\s(?P<reference>.*)
       parse:
         originators:
           source: originators_raw
           split: ","
-          pattern: (?P<name>.*)\s\((?P<party>.*)\)
+          patterns:
+            - (?P<name>.*)\s+\((?P<party>.*)\)
+            - \((?P<party>.*)\)
+            - (?P<party>.*)\)
+            - \((?P<party>.*)
+            - (?P<party>.*)
       dateparser:
         dayfirst: true
     handle:
