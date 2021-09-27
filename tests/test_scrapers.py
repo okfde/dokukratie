@@ -113,7 +113,28 @@ class Test(unittest.TestCase):
         os.makedirs(f"./testdata/{scraper_name}", exist_ok=True)
 
     def test_bb(self):
-        self.run_scraper("bb", document_types="generic")
+        self.run_scraper("bb", document_types="interpellation")
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=6,
+            start_date="2014-09-14",
+            end_date="2015-01-14",
+        )
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=4,
+            start_date="2004-09-19",
+            end_date="2005-01-19",
+        )
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=1,
+            start_date="1990-10-14",
+            end_date="1991-01-14",
+        )
 
     def test_be(self):
         self.run_scraper("be", document_types="written_interpellation")
