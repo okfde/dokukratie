@@ -25,10 +25,10 @@ pipeline:
     params:
       url: https://parlis.landtag-bw.de/parlis/
       dateformat: "%d.%m.%Y"
-      legislative_terms: 17  # earliest: 13
+      legislative_terms: 17  # earliest: 9
       document_types:
         - minor_interpellation
-        - major_interpellation
+        # - major_interpellation
     handle:
       pass: fetch
 
@@ -110,7 +110,7 @@ pipeline:
         originators:
           source: originators_raw
           split: ","
-          pattern: (?P<name>.*)\((?P<party>.*)\)
+          patterns: (?P<name>.*)\((?P<party>.*)\)
       dateparser:
         dayfirst: true
     handle:

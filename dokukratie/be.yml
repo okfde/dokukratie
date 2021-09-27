@@ -99,7 +99,7 @@ pipeline:
         originators:
           source: originators_raw
           split: ","
-          pattern: (?P<name>.*)\((?P<party>.*)\)
+          patterns: (?P<name>.*)\((?P<party>.*)\)
       dateparser:
         dayfirst: true
     handle:
