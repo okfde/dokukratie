@@ -64,7 +64,7 @@ pipeline:
       meta:
         title: './/span[@name="OFR_Betreff"]'
         reference:  './/span[@name="OFR_Drs"]'
-        originators: './/span[@name="OFR_Initiator"]'
+        originators_raw: './/span[@name="OFR_Initiator"]'
     handle:
       next_page: search
       pass: fetch_detail
@@ -83,7 +83,7 @@ pipeline:
           - './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")][last()]/following-sibling::a[1]'  # link to pdf download page
           - './/a[contains(text(), "Originaldokument als PDF-Datei")]'  # actual link to pdf
       meta:
-        published_at: './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")]'
+        meta_raw: './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")]'
     handle:
       fetch: fetch_detail
       store: clean
@@ -92,8 +92,15 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \s?(\d{2}\.\d{2}\.\d{4})\sDrucksache.*
+      extract:
+        meta_raw: (?P<summary>.*)\s+Kleine\s+Anfrage\s+.*(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+und\s+Antwort\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+      parse:
+        originators:
+          source: originators_raw
+          patterns:
+            - (?P<name>.*),\s+(?P<party>\w+)
+      defaults:
+        answerers: Landesregierung
       dateparser:
         dayfirst: true
     handle:
