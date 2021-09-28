@@ -48,7 +48,7 @@ pipeline:
       next_page: './/div[@class="pd_resultnavigation"]/a/@href'
       meta:
         reference: 'preceding-sibling::tr/td[@headers="result-nummer"]/text()'
-        originators: './/td[@headers="result-urheber"]/text()'
+        interpellation_raw: './/td[@headers="result-urheber"]/text()'
         published_at: 'preceding-sibling::tr/td[@headers="result-datum"]/text()'
     handle:
       next_page: fetch_results
@@ -77,8 +77,18 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
+      extract:
+        interpellation_raw: (?P<originators_raw>.*),\s+Landesregierung\s+\((?P<answerers>.*)\).*
+      parse:
+        originators:
+          source: originators_raw
+          split: ","
+          patterns:
+            - (?P<name>.*)\s+\((?P<party>.*)\)
+            - \((?P<party>.*)\)
+            - (?P<party>.*)\)
+            - \((?P<party>.*)
+            - (?P<party>.*)
       dateparser:
         dayfirst: true
     handle:
