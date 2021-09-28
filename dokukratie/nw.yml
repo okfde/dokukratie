@@ -18,11 +18,10 @@ pipeline:
   init:
     method: dokukratie.scrapers.operations:init
     params:
-      url: "https://www.landtag.nrw.de/home/dokumente_und_recherche/parlamentsdatenbank/Suchergebnisse_Ladok.html"
+      url: "https://www.landtag.nrw.de/home/dokumente/dokumentensuche/parlamentsdokumente/parlamentsdatenbank-suchergebnis.html"
       dateformat: "%d.%m.%Y"
       urlparams:
         dokart: DRUCKSACHE
-        view: kurz
       legislative_terms: 17
       document_types:
         - minor_interpellation
@@ -49,16 +48,15 @@ pipeline:
       store:
         mime_group: documents
       include_paths:
-        - "(.//div[@class='paging_center'])[1]//img[@title='nächste Seite']/.."  # next pages
-        - ".//td/span/a[contains(text(), 'Beratungsverlauf')]/.."  # detail page
-        - ".//p[contains(text(), 'Antwort')]"  # pdf url on detail page
+        - './/a[@data-js-page="next"]'  # next pages
+        - ".//a/span[contains(text(), 'Beratungsverlauf')]/.."  # detail page
+        - './/article[@class="e-search-result"]//p[contains(text(), "Antwort")]' # pdf url on detail page
       meta:
         # on detail page
         reference: ".//p[contains(text(), 'Antwort')]/a/text()"
-        title: ".//p[@class='detailansicht'][1]/b"
-        summary: ".//p[@class='detailansicht'][2]"
-        originators: ".//p[@class='detailansicht'][1]/following-sibling::text()[2]"
-        published_at: ".//p[contains(text(), 'Antwort')]/a/following-sibling::text()[1]"
+        title: './/div[@class="e-search-result__body"]/p/strong/b'
+        interpellation_raw: './/div[@class="e-search-result__body"]/p[1]'
+        answer_raw: './/div[@class="e-search-result__body"]/p[2]'
     handle:
       fetch: fetch
       store: clean
@@ -66,8 +64,15 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
+      extract:
+        interpellation_raw: .*\s+(Kleine\s+Anfrage|KlAnfr)\s+\d+\s+(?P<originators_raw>.*)\s+(Drucksache|Drs)\s+(?P<interpellation_reference>\d{1,2}\/\d+)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4}).*
+        answer_raw: Antwort\s+(?P<answerers>.*)\s+Drucksache\s+\d{1,2}\/\d+\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+      parse:
+        originators:
+          source: originators_raw
+          split: ";"
+          patterns:
+            - (?P<name>.*)
       dateparser:
         dayfirst: true
     handle:
