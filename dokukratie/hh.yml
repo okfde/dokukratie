@@ -22,7 +22,7 @@ pipeline:
   init:
     method: dokukratie.scrapers.parldok:init
     params:
-      legislative_terms: 22
+      legislative_terms: 22  # earliest: 16
       document_types:
         - minor_interpellation
         - major_interpellation
@@ -48,7 +48,7 @@ pipeline:
       next_page: './/div[@class="pd_resultnavigation"]/a/@href'
       meta:
         reference: 'preceding-sibling::tr/td[@headers="result-nummer"]/text()'
-        originators: './/td[@headers="result-urheber"]/text()'
+        originators_raw: './/td[@headers="result-urheber"]/text()'
         published_at: 'preceding-sibling::tr/td[@headers="result-datum"]/text()'
     handle:
       next_page: fetch_results
@@ -77,8 +77,18 @@ pipeline:
   clean:
     method: dokukratie.scrapers.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
+      parse:
+        originators:
+          source: originators_raw
+          split: ","
+          patterns:
+            - (?P<name>.*)\s+\((?P<party>.*)\)
+            - \((?P<party>.*)\)
+            - (?P<party>.*)\)
+            - \((?P<party>.*)
+            - (?P<party>.*)
+      defaults:
+        answerers: Senat
       dateparser:
         dayfirst: true
     handle:
