@@ -10,15 +10,15 @@ setup(
     package_dir={"dokukratie": "dokukratie"},
     namespace_packages=[],
     include_package_data=True,
-    # entry_points={
-    #     "console_scripts": ["dokukratie = dokukratie.cli:cli"],
-    #     # "dokukratie.operations": ["init = dokukratie.operations.initialize:init"],
-    # },
+    entry_points={
+        "console_scripts": ["dokukratie = dokukratie.cli:cli"],
+        # "dokukratie.operations": ["init = dokukratie.operations.initialize:init"],
+    },
     zip_safe=False,
     install_requires=[
         "click<8.0.0",
         "memorious",
-        "memorious-extended @ git+https://github.com/simonwoerpel/memorious-extended.git",
+        "memorious-extended @ git+https://github.com/simonwoerpel/memorious-extended.git",  # noqa
         "mmmeta",
         "pyicu",
     ],
