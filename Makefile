@@ -85,11 +85,10 @@ test:
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/
 	rm -rf testdata
 
-
 test.%:
 	rm -rf testdata/$*
 	mkdir -p testdata/$*
-	pytest -s --cov=dokukratie --cov-report term-missing ./tests/ -k "test_$*"
+	pytest -s --cov=dokukratie --cov=memorious_extended --cov-report term-missing ./tests/ -k "test_$*"
 	rm -rf testdata/$*
 
 clean:
