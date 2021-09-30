@@ -1,5 +1,6 @@
 name: sehrgutachten
 description: 'Ausarbeitungen der Wissenschaftlichen Dienste des Bundestags'
+stealthy: true
 
 document_types:
   assessment: Gutachten
@@ -16,7 +17,7 @@ publisher:
 pipeline:
 
   init:
-    method: dokukratie.scrapers.operations:init
+    method: dokukratie.operations:init
     params:
       url: https://www.bundestag.de/ajax/filterlist/de/dokumente/ausarbeitungen/474644-474644
       dateformat: "%s000"
@@ -32,7 +33,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse
 
@@ -49,9 +50,9 @@ pipeline:
       download: download
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
