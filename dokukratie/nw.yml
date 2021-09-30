@@ -1,5 +1,6 @@
 name: nw
 description: Parlamentsdatenbank Nordrhein-Westfalen
+stealthy: true
 
 publisher:
   type: parliament
@@ -16,7 +17,7 @@ document_types:
 pipeline:
 
   init:
-    method: dokukratie.scrapers.operations:init
+    method: dokukratie.operations:init
     params:
       url: "https://www.landtag.nrw.de/home/dokumente/dokumentensuche/parlamentsdokumente/parlamentsdatenbank-suchergebnis.html"
       dateformat: "%d.%m.%Y"
@@ -35,7 +36,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     params:
       skip_incremental:
         urlpattern: .*view=berver$
@@ -43,7 +44,7 @@ pipeline:
       pass: parse
 
   parse:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       store:
         mime_group: documents
@@ -59,24 +60,54 @@ pipeline:
         answer_raw: './/div[@class="e-search-result__body"]/p[2]'
     handle:
       fetch: fetch
-      store: clean
+      store: extract
 
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      extract:
-        interpellation_raw: .*\s+(Kleine\s+Anfrage|KlAnfr)\s+\d+\s+(?P<originators_raw>.*)\s+(Drucksache|Drs)\s+(?P<interpellation_reference>\d{1,2}\/\d+)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4}).*
-        answer_raw: Antwort\s+(?P<answerers>.*)\s+Drucksache\s+\d{1,2}\/\d+\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
-      parse:
-        originators:
-          source: originators_raw
-          split: ";"
+        interpellation_raw: .*\s+(Kleine\s+Anfrage|KlAnfr|Große\s+Anfrage|GrAnfr)\s+\d+\s+(?P<originators_raw>.*)\s+(Drucksache|Drs)\s+(?P<interpellation_reference>\d{1,2}\/\d+)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4}).*
+        answer_raw: Antwort\s+(?P<answerers>.*)\s+(Drucksache|Drs)\s+\d{1,2}\/\d+\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+        originators_raw:
+          store_as: originators
+          split: " , "  #  Weske, Markus Herbert SPD , Paul, Josefine; Müller, Thomas GRÜNE
           patterns:
-            - (?P<name>.*)
-      dateparser:
-        dayfirst: true
+            - (?P<names>.*)\s+(?P<party>\w+)(\s+)?$
+          originators_all:
+            split: ";"
+            patterns:
+              - (?P<name>.*)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store

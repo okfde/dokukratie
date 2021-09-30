@@ -321,9 +321,35 @@ class Test(unittest.TestCase):
         # self.run_scraper("ni", document_types="major_interpellation")
 
     def test_nw(self):
-        start_date = self.start_date - timedelta(days=30)  # nw has a lot unanswered
+        start_date = self.start_date - timedelta(days=60)  # nw has a lot unanswered
+        end_date = start_date + timedelta(days=30)
         self.run_scraper(
-            "nw", document_types="minor_interpellation", start_date=start_date
+            "nw",
+            legislative_terms=17,  # FIXME test breaks bc of wrong dates L:91
+            document_types="minor_interpellation",
+            start_date=start_date,
+            end_date=end_date,
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=15,
+            start_date="2011-01-01",
+            end_date="2011-03-01",
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=12,
+            start_date="1998-01-01",
+            end_date="1998-03-01",
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=10,
+            start_date="1988-01-01",
+            end_date="1988-03-01",
         )
         # self.run_scraper("nw", document_types="major_interpellation")
 
