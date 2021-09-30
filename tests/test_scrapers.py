@@ -355,6 +355,27 @@ class Test(unittest.TestCase):
 
     def test_rp(self):
         self.run_scraper("rp", document_types="minor_interpellation")
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=16,
+            start_date="2013-01-01",
+            end_date="2013-06-01",
+        )
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=13,
+            start_date="2000-01-01",
+            end_date="2000-06-01",
+        )
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=11,
+            start_date="1990-01-01",
+            end_date="1990-06-01",
+        )
         # self.run_scraper("rp", document_types="major_interpellation")
 
     def test_sh(self):
