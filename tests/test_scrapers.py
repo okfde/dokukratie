@@ -1,15 +1,16 @@
 import glob
 import json
 import os
+import time
 import unittest
 from datetime import datetime, timedelta
 from itertools import product
+from pprint import pformat
 
 from banal import clean_dict, ensure_list
 from dateutil.parser import parse as dateparse
+from memorious_extended.util import ensure_date
 from servicelayer import env
-
-from dokukratie.scrapers.util import ensure_date, pretty_dict
 
 
 def get_latest_meta(scraper_name):
@@ -31,6 +32,7 @@ class Test(unittest.TestCase):
         legislative_terms=None,
         start_date=None,
         end_date=None,
+        **additional_envs,
     ):
         base_params = {
             "TESTING_MODE": True,
@@ -66,13 +68,20 @@ class Test(unittest.TestCase):
             )
 
             param_str = " ".join(
-                f"{k}={v}" for k, v in {**base_params, **params}.items()
+                f"{k}={v}"
+                for k, v in {**base_params, **params, **additional_envs}.items()
             )
+
+            print("env:", pformat(param_str))
+
             ret = os.system(f"{param_str} memorious run {scraper_name}")
             self.assertEqual(ret, 0)
 
             # test metadata
             data = get_latest_meta(scraper_name)
+
+            print(pformat(data))
+
             for key in (
                 "reference",
                 "title",
@@ -96,13 +105,14 @@ class Test(unittest.TestCase):
             if legislative_term is not None:
                 self.assertEqual(data["legislative_term"], legislative_term)
 
-            print(pretty_dict(data))
             if "interpellation" in data["document_type"]:
                 self.assertIn("originators", data)
                 self.assertIsInstance(data["originators"], list)
                 self.assertGreaterEqual(len(data["originators"]), 1)
-                self.assertIsInstance(data["originators"][0], dict)
-                self.assertIn("name", data["originators"][0])
+                for o in data["originators"]:
+                    self.assertIsInstance(o, dict)
+                    # either "name" or "party" should be in dict:
+                    self.assertLessEqual(len(set(("name", "party")) - set(o.keys())), 2)
                 self.assertIn("answerers", data)
 
     def setUp(self):
