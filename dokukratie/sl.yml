@@ -1,5 +1,6 @@
 name: sl
 description: Saarland - Landtagsdokumente
+stealthy: true
 
 document_types:
   minor_interpellation: Anfrage
@@ -18,7 +19,7 @@ scraper:
 
 pipeline:
   init:
-    method: dokukratie.scrapers.base:init
+    method: dokukratie.operations:init
     params:
       url: https://www.landtag-saar.de/umbraco/aawSearchSurfaceController/SearchSurface/GetSearchResults/
       document_types:
@@ -28,9 +29,9 @@ pipeline:
       pass: search
 
   search:
-    method: dokukratie.scrapers.operations:post
+    method: memorious_extended.operations:post_json
     params:
-      json:
+      data:
         CurrentSearchTab: 1
         Filter:
           # StartTime: /Date(1254441600000)/
@@ -61,9 +62,9 @@ pipeline:
       pass: parse_results
 
   parse_results:
-    method: dokukratie.scrapers.operations:parse_json
+    method: memorious_extended.operations:parse_jq
     params:
-      jq: >
+      pattern: >
         .Items[] | {
           title: .Title,
           published_at: .PublicDate,
@@ -72,12 +73,13 @@ pipeline:
           originators: .DocumentAuthor,
           answerers: .Publisher,
           document_type: .DocumentType,
+          download_url: .FilePath,
           operation_id: .OperationsList.FileList[0].Id}
     handle:
       pass: fetch_detail
 
   fetch_detail:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     params:
       rewrite:
         method: template
@@ -89,7 +91,7 @@ pipeline:
       pass: parse_detail
 
   parse_detail:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       store:
         mime_group: documents
@@ -103,7 +105,7 @@ pipeline:
       store: clean
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     params:
       rewrite:
         method: replace
@@ -111,13 +113,35 @@ pipeline:
     handle:
       pass: parse_detail
 
+  # clean and validate metadata
   clean:
-    method: dokukratie.scrapers.operations:clean
+    method: dokukratie.operations:clean
     params:
-      extractors:
-        published_at: \d+
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
