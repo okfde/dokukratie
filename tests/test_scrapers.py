@@ -379,7 +379,9 @@ class Test(unittest.TestCase):
         # self.run_scraper("rp", document_types="major_interpellation")
 
     def test_sh(self):
-        self.run_scraper("sh", document_types="minor_interpellation")
+        self.run_scraper(
+            "sh", document_types="minor_interpellation", legislative_terms=19
+        )
         # self.run_scraper("sh", document_types="major_interpellation")
 
     def test_st(self):

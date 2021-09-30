@@ -1,5 +1,6 @@
 name: sh
 description: Landtagsinformationssystem Schleswig-Holstein
+stealthy: true
 
 publisher:
   type: parliament
@@ -15,39 +16,24 @@ document_types:
 
 pipeline:
   init:
-    method: dokukratie.scrapers.base:init
+    method: dokukratie.operations:init
     params:
       url_template: http://lissh.lvn.parlanet.de/cgi-bin/starfinder/0?path=lisshfl.txt&id=FASTLINK&pass=&search=WP%3d{{ legislative_term }}+AND+dtyp%3dkleine&format=WEBKURZFL
-      # dateformat: "%d.%m.%Y"
-      # param_names:
-      #   document_type: suchvorgangsart[]
-      #   legislative_term: wahlperiodeid[]
-      #   start_date: erfassungsdatum[start]
-      #   end_date: erfassungsdatum[end]
       document_types:
         - minor_interpellation
         # - major_interpellation
-      legislative_terms:
+      legislative_terms:  # earliest: 1
         - 19
-        - 18
-        - 17
-        - 16
-        - 15
-        - 14
-        - 13
-        - 12
-        - 11
-        - 10
     handle:
       pass: fetch
 
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse
 
   parse:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       skip_incremental:
         target:
@@ -60,24 +46,53 @@ pipeline:
       meta:
         source_url: ".//td[3]/a/@href"
         title: ".//td[2]/b/text()"
-        reference: ".//td[2]/a/text()"
-        metadata: ".//td[2]"
+        meta_raw: ".//td[2]"
     handle:
       fetch: fetch
-      store: clean
+      store: extract
 
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      extract:
-        source: metadata
+      meta_raw:
+        - .*Kleine\s+Anfrage\s+(?P<originators_raw>.*)\s+und\s+Antwort\s+(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})?\s*Drucksache\s+(?P<reference>\d{1,2}\/\d+)
+      originators_raw:
+        store_as: originators
+        split: ","
         patterns:
-          - .*Kleine\s+Anfrage\s+(?P<originators>.*)\s*und\s+Antwort\s+(?P<answerers>.+)\s+(?P<published_at>[\d\.]+)\s+Drucksache
-          - .*Kleine\s+Anfrage\s+(?P<originators>.*)\s*und\s+Antwort\s+(?P<answerers>.+)\s+Drucksache
-      dateparser:
-        dayfirst: true
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
