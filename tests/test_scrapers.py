@@ -285,7 +285,39 @@ class Test(unittest.TestCase):
         # self.run_scraper("mv", document_types="major_interpellation")
 
     def test_ni(self):
-        self.run_scraper("ni", document_types="minor_interpellation")
+        self.run_scraper(
+            "ni", document_types="minor_interpellation", MEMORIOUS_RATE_LIMIT=10
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=15,
+            start_date="2004-01-01",
+            end_date="2004-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=12,
+            start_date="1992-01-01",
+            end_date="1992-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=10,
+            start_date="1985-01-01",
+            end_date="1985-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
         # self.run_scraper("ni", document_types="major_interpellation")
 
     def test_nw(self):
