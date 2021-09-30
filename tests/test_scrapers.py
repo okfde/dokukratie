@@ -238,6 +238,20 @@ class Test(unittest.TestCase):
 
     def test_hh(self):
         self.run_scraper("hh", document_types="minor_interpellation")
+        self.run_scraper(
+            "hh",
+            document_types="minor_interpellation",
+            legislative_terms=20,
+            start_date="2012-01-01",
+            end_date="2012-06-01",
+        )
+        self.run_scraper(
+            "hh",
+            document_types="minor_interpellation",
+            legislative_terms=16,
+            start_date="2000-01-01",
+            end_date="2000-06-01",
+        )
         # self.run_scraper("hh", document_types="major_interpellation")
 
     def test_he(self):
