@@ -1,13 +1,15 @@
+from pprint import pformat
 from urllib.parse import urljoin
 
-from banal import ensure_dict
+from banal import clean_dict, ensure_dict
 from furl import furl
 from memorious.operations.parse import parse_for_metadata
+from memorious_extended.forms import get_form
+from memorious_extended.incremental import skip_incremental, skip_while_testing
+from memorious_extended.util import get_value_from_xp as x
+from memorious_extended.util import re_first
 
 from .base import BaseScraper
-from .incremental import skip_incremental
-from .util import get_value_from_xp as x
-from .util import get_form, pretty_dict, re_first
 
 
 class StarwebScraper(BaseScraper):
@@ -51,7 +53,7 @@ class StarwebScraper(BaseScraper):
                     formdata[field] = value
 
             # do the post search and emit to next stage
-            self.context.log.debug(f"Using formdata: {pretty_dict(formdata)}")
+            self.context.log.debug(f"Using formdata: {pformat(clean_dict(formdata))}")
             res = self.context.http.post(form_url, data=formdata)
             self.context.emit(data={**data, **res.serialize()})
 
@@ -77,22 +79,25 @@ class StarwebScraper(BaseScraper):
                 params = x(item, self.context.params["detail_params"])
                 params = re_first(r"(WP=\d{1,2}\sAND\sR=\d+)", params)
                 url = (
-                    furl(self.context.params["detail_url"]).add({"search": params}).url
+                    furl(self.context.params["detail_url"])
+                    .add({"search": params})
+                    .url  # noqa
                 )
             else:
                 url = x(item, self.context.params["download_url"])
-                data["source_url"] = url
 
             if url:
                 if not url.startswith("http"):
                     url = urljoin(data["url"], f"/{url}")
-                detail_data["url"] = url
+                detail_data["url"] = detail_data["source_url"] = url
+
+                data = {**data, **detail_data}
 
                 # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
                 if not skip_incremental(
-                    self.context, detail_data, self.skip_incremental_config
+                    self.context, data, self.skip_incremental_config
                 ):
-                    self.context.emit(data={**data, **detail_data})
+                    self.context.emit(data=data)
 
         # pagination
         next_page = self.context.params.get("next_page")
@@ -102,30 +107,12 @@ class StarwebScraper(BaseScraper):
                 data["formdata"].update(ensure_dict(next_page.get("formdata")))
                 page = data.get("page", 1) + 1
                 data["page"] = page
-                self.context.log.info("Next page: %s" % page)
-                self.context.emit("next_page", data=data)
-
-    def emit_post(self, data):
-        """
-        a helper to perform some weird navigating post requests for initializing
-        for some isntances of starweb
-        """
-
-        res = self.context.http.rehash(data)
-        form_url, formdata = get_form(self.context, res.html, self.form_xp)
-        if form_url is not None and formdata is not None:
-            self.context.log.debug(f"Using formdata: {pretty_dict(formdata)}")
-            formdata.update(ensure_dict(self.context.params.get("formdata")))
-            res = self.context.http.post(form_url, data=formdata)
-            self.context.emit(data={**data, **res.serialize()})
+                if not skip_while_testing(self.context, key="paginate"):  # testing
+                    self.context.log.info("Next page: %s" % page)
+                    self.context.emit("next_page", data=data)
 
 
 # actual stages for pipeline
-
-
-def init(context, data):
-    scraper = StarwebScraper(context)
-    scraper.emit_configuration()
 
 
 def search(context, data):
@@ -136,8 +123,3 @@ def search(context, data):
 def parse_results(context, data):
     scraper = StarwebScraper(context)
     scraper.emit_parse_results(data)
-
-
-def post(context, data):
-    scraper = StarwebScraper(context)
-    scraper.emit_post(data)

@@ -1,6 +1,6 @@
-import json
+from pprint import pformat
 
-from .util import pretty_dict
+import json
 
 
 def search(context, data):
@@ -13,7 +13,7 @@ def search(context, data):
 
     query = query % data
     query = json.loads(query)
-    context.log.debug(pretty_dict(query))
+    context.log.debug(pformat(query))
 
     res = context.http.post(context.params["url"], json=query)
 
