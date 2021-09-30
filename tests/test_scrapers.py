@@ -268,6 +268,20 @@ class Test(unittest.TestCase):
 
     def test_mv(self):
         self.run_scraper("mv", document_types="minor_interpellation")
+        self.run_scraper(
+            "mv",
+            document_types="minor_interpellation",
+            legislative_terms=4,
+            start_date="2004-01-01",
+            end_date="2004-06-01",
+        )
+        # self.run_scraper(
+        #     "mv",
+        #     document_types="minor_interpellation",
+        #     legislative_terms=1,
+        #     start_date="1990-01-01",
+        #     end_date="1994-06-01",
+        # )
         # self.run_scraper("mv", document_types="major_interpellation")
 
     def test_ni(self):
