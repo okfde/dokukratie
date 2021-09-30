@@ -1,5 +1,6 @@
 name: bb
 description: ELVIS Parlamentsdokumentation Brandenburg
+stealthy: true
 
 publisher:
   type: parliament
@@ -21,7 +22,7 @@ pipeline:
 
   # emit scrape criteria
   init:
-    method: dokukratie.scrapers.starweb:init
+    method: dokukratie.operations:init
     params:
       legislative_terms:
         - 7
@@ -39,15 +40,16 @@ pipeline:
 
   # initialize session
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: redirect
 
   # weird initial redirect via post form
   redirect:
-    method: dokukratie.scrapers.starweb:post
+    method: memorious_extended.operations:post_form
     params:
-      formdata:
+      form: './/form[@name="__form"]'
+      data:
         __action: 41
     handle:
       pass: search
@@ -80,7 +82,7 @@ pipeline:
           __action: 201
       meta:
         # reference, originators, etc..: store the full paragraph for each field,
-        # extract the granular information later in `clean` stage
+        # extract the granular information later in `extract` stage
         title: './div[@name="Repeat_TYP"]/div[@class="topic"]/h4'
         keywords: './div[@name="Repeat_TYP"]/div[@class="topic"]/a'
         interpellation_raw: './div[@name="Repeat_TYP"]/div[@class="topic2"]/span[2]'
@@ -90,31 +92,56 @@ pipeline:
       pass: download  # yield pdf urls and detail metadata
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: extract
+
+  extract:
+    method: memorious_extended.operations:regex_groups
+    params:
+      interpellation_raw: (?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s?Drucksache\s?(?P<interpellation_reference>\d{1,2}\/\d+)
+      answer_raw: Antwort\s\((?P<answerers>.*)\)\s(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\s+(?P<reference>\d{1,2}\/\d+)
+      originators_raw:
+        store_as: originators
+        split: ","
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - \((?P<party>.*)\)
+          - (?P<party>.*)\)
+          - \((?P<party>.*)
+          - (?P<party>.*)
     handle:
       pass: clean
 
-  # extract & cleanup metadata
+  # clean and validate metadata
   clean:
-    method: dokukratie.scrapers.operations:clean
+    method: dokukratie.operations:clean
     params:
-      extract:
-        interpellation_raw: (?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s?Drucksache\s?(?P<interpellation_reference>\d{1,2}\/\d+)
-        answer_raw: Antwort\s\((?P<answerers>.*)\)\s(?P<published_at>\d{2}\.\d{2}\.\d{4})\s(?P<reference>.*)
-      parse:
-        originators:
-          source: originators_raw
-          split: ","
-          patterns:
-            - (?P<name>.*)\s+\((?P<party>.*)\)
-            - \((?P<party>.*)\)
-            - (?P<party>.*)\)
-            - \((?P<party>.*)
-            - (?P<party>.*)
-      dateparser:
-        dayfirst: true
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
