@@ -229,7 +229,10 @@ class Test(unittest.TestCase):
 
     def test_hb(self):
         self.run_scraper(
-            "hb", document_types="minor_interpellation", start_date="2021-05-01"
+            "hb",
+            document_types="minor_interpellation",
+            start_date="2021-05-01",
+            MEMORIOUS_RATE_LIMIT=10,  # be careful with bremen!
         )
         # self.run_scraper("hh", document_types="major_interpellation")
 
