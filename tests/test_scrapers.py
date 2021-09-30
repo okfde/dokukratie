@@ -255,7 +255,15 @@ class Test(unittest.TestCase):
         # self.run_scraper("hh", document_types="major_interpellation")
 
     def test_he(self):
-        self.run_scraper("he", document_types="minor_interpellation")
+        self.run_scraper(
+            "he", document_types="minor_interpellation", start_date="2021-01-01"
+        )
+        # self.run_scraper(
+        #     "he",
+        #     document_types="minor_interpellation",
+        #     legislative_terms="WP19",
+        #     start_date="2016-01-01",
+        # )
         # self.run_scraper("he", document_types="major_interpellation")
 
     def test_mv(self):
