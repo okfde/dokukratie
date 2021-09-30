@@ -394,6 +394,9 @@ class Test(unittest.TestCase):
 
     def test_sn(self):
         self.run_scraper("sn", document_types="minor_interpellation")
+        # self.run_scraper(
+        #     "sn", document_types="minor_interpellation", legislative_terms=6
+        # )
         # self.run_scraper("sn", document_types="major_interpellation")
 
     def test_th(self):
