@@ -201,7 +201,30 @@ class Test(unittest.TestCase):
         # self.run_scraper("bw", document_types="major_interpellation")
 
     def test_by(self):
-        self.run_scraper("by", document_types="minor_interpellation")
+        self.run_scraper(
+            "by", legislative_terms=18, document_types="minor_interpellation"
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=15,
+            document_types="minor_interpellation",
+            start_date="2005-01-01",
+            end_date="2005-06-01",
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=8,
+            document_types="minor_interpellation",
+            start_date="1975-01-01",
+            end_date="1975-06-01",
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=5,
+            document_types="minor_interpellation",
+            start_date="1964-01-01",
+            end_date="1964-06-01",
+        )
         # self.run_scraper("by", document_types="major_interpellation")
 
     def test_hb(self):
