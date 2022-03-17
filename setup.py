@@ -19,5 +19,6 @@ setup(
         "furl",
         "packaging",
         "pyicu",
+        "regex==2022.3.2",
     ],
 )
