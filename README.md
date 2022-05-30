@@ -287,7 +287,7 @@ http://parldok.thueringen.de/ParlDok/formalkriterien/
 
 There is a [really nice api](https://dip.bundestag.de/%C3%BCber-dip/hilfe/api#content).
 The scraper uses this base url (with the public api key):
-https://search.dip.bundestag.de/api/v1/drucksache?apikey=N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464&f.zuordnung=BT
+https://search.dip.bundestag.de/api/v1/drucksache?apikey=GmEPb1B.bfqJLIhcGAsH9fTJevTglhFpCoZyAAAdhp&f.zuordnung=BT
 
 #### `DOCUMENT_TYPES`:
 - `minor_interpellation`
