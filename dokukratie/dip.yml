@@ -22,7 +22,7 @@ pipeline:
         - minor_interpellation
       legislative_terms: 19
       urlparams:
-        apikey: N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464
+        apikey: GmEPb1B.bfqJLIhcGAsH9fTJevTglhFpCoZyAAAdhp
         f.zuordnung: BT
       param_names:
         start_date: f.datum.start
