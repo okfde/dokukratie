@@ -27,6 +27,23 @@ parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentss
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
 
+# all the things
+config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
+action.states: bb.action bw.action by.action hh.action he.action mv.action ni.action nw.action rp.action st.action th.action
+pull.states: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
+mmmeta.states: bb.mmmeta bw.mmmeta by.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta st.mmmeta th.mmmeta
+upload.states: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
+push.states: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
+download.states: bb.download bw.download by.download hh.download he.download mv.download ni.download nw.download rp.download st.download th.download
+download.states: bb.download bw.download by.download hh.download he.download mv.download ni.download nw.download rp.download st.download th.download
+sync.states: states.config states.pull states.mmmeta states.upload
+
+config: config.states dip.config sehrgutachten.config
+pull: pull.states dip.pull sehrgutachten.pull
+sync: sync.states dip.sync sehrgutachten.sync
+push: push.states dip.push sehrgutachten.push
+download: download.states dip.download sehrgutachten.download
+
 he.run_prod:
 	# don't ddos hessen
 	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he --threads=4
@@ -79,7 +96,10 @@ install.test: install.dev
 %.upload:
 	aws s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
-test:
+%.download:
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$* ./data/store/$*
+
+test: install.test
 	rm -rf testdata
 	mkdir testdata
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/
