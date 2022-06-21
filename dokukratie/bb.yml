@@ -12,7 +12,7 @@ publisher:
 
 scraper:
   name: starweb
-  version: 6.0.0
+  version: 6.1.0
   url: https://www.parlamentsdokumentation.brandenburg.de
 
 document_types:
@@ -50,7 +50,7 @@ pipeline:
     params:
       form: './/form[@name="__form"]'
       data:
-        __action: 41
+        __action: 74
     handle:
       pass: search
 
@@ -64,8 +64,8 @@ pipeline:
         start_date: LISSH_DatumV
         end_date: LISSH_DatumB
       formdata:
-        __action: 87
-        LISSH_DART_ADV: DRUCKSACHE
+        __action: 112
+        LISSH_DART_ADV: "DRUCKSACHE"
         NumPerSegment: 1000000
         LimitMaximumHitCount: "S99{ITEMS -1:-100000}"
     handle:
@@ -74,19 +74,19 @@ pipeline:
   parse_results:
     method: dokukratie.scrapers.starweb:parse_results
     params:
-      item: './/div[@name="RecordRepeater"]'
-      download_url: './div[@name="Repeat_DBE"]/div[@class="asideD noprint"]//a[@title="Gesamtdokument"]/@href'
+      item: './/li[@name="RecordRepeater"]'
+      download_url: './/div[@name="Repeat_DBE"]//a[@title="Gesamtdokument"]/@href'
       next_page:
-        xpath: './/div[@id="seitenzahl"]//span[@name="NextRecsConditional"]'
+        xpath: './/ul[@class="pagination"]//li[@name="NextRecsConditional"]'
         formdata:
           __action: 201
       meta:
         # reference, originators, etc..: store the full paragraph for each field,
         # extract the granular information later in `extract` stage
-        title: './div[@name="Repeat_TYP"]/div[@class="topic"]/h4'
-        keywords: './div[@name="Repeat_TYP"]/div[@class="topic"]/a'
-        interpellation_raw: './div[@name="Repeat_TYP"]/div[@class="topic2"]/span[2]'
-        answer_raw: './div[@name="Repeat_DBE"]/div[@class="topic2"]'
+        title: './div[@name="Repeat_TYP"]//strong'
+        keywords: './div[@name="Repeat_TYP"]//a[@name="LinkThes"]'
+        interpellation_raw: './div[@name="Repeat_TYP"]//span[@name="OFR_BASIS3"]'
+        answer_raw: './div[@name="Repeat_DBE"]//p'
     handle:
       next_page: search  # resend search post form with next page
       pass: download  # yield pdf urls and detail metadata
