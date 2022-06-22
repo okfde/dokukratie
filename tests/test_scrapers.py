@@ -1,14 +1,16 @@
 import glob
 import json
 import os
+import time
 import unittest
 from datetime import datetime, timedelta
 from itertools import product
+from pprint import pformat
 
 from banal import clean_dict, ensure_list
 from dateutil.parser import parse as dateparse
-
-from dokukratie.scrapers.util import ensure_date
+from memorious_extended.util import ensure_date
+from servicelayer import env
 
 
 def get_latest_meta(scraper_name):
@@ -30,6 +32,7 @@ class Test(unittest.TestCase):
         legislative_terms=None,
         start_date=None,
         end_date=None,
+        **additional_envs,
     ):
         base_params = {
             "TESTING_MODE": True,
@@ -47,7 +50,7 @@ class Test(unittest.TestCase):
             ensure_list(document_types) or [None],
         ):
             start_date = ensure_date(
-                start_date
+                env.get("START_DATE", start_date)
                 or (
                     self.major_start_date
                     if "major" in (document_type or "")
@@ -65,13 +68,20 @@ class Test(unittest.TestCase):
             )
 
             param_str = " ".join(
-                f"{k}={v}" for k, v in {**base_params, **params}.items()
+                f"{k}={v}"
+                for k, v in {**base_params, **params, **additional_envs}.items()
             )
+
+            print("env:", pformat(param_str))
+
             ret = os.system(f"{param_str} memorious run {scraper_name}")
             self.assertEqual(ret, 0)
 
             # test metadata
             data = get_latest_meta(scraper_name)
+
+            print(pformat(data))
+
             for key in (
                 "reference",
                 "title",
@@ -80,6 +90,10 @@ class Test(unittest.TestCase):
                 "published_at",
             ):
                 self.assertIn(key, data)
+            for key in ("type", "name", "url", "jurisdiction"):
+                self.assertIn(key, data["publisher"])
+            for key in ("id", "name"):
+                self.assertIn(key, data["publisher"]["jurisdiction"])
             self.assertIsInstance(dateparse(data["published_at"]), datetime)
             if document_type is not None:
                 self.assertEqual(data["document_type"], document_type)
@@ -90,11 +104,16 @@ class Test(unittest.TestCase):
                 self.assertLessEqual(dateparse(data["published_at"]).date(), end_date)
             if legislative_term is not None:
                 self.assertEqual(data["legislative_term"], legislative_term)
-            # if document_type in ("major_interpellation", "minor_interpellation"):
-            # self.assertIsInstance(data["originators"], list)
-            # self.assertGreaterEqual(len(data["originators"]), 1)
-            # self.assertIsInstance(data["answerers"], list)
-            # self.assertGreaterEqual(len(data["answerers"]), 1)
+
+            if "interpellation" in data["document_type"]:
+                self.assertIn("originators", data)
+                self.assertIsInstance(data["originators"], list)
+                self.assertGreaterEqual(len(data["originators"]), 1)
+                for o in data["originators"]:
+                    self.assertIsInstance(o, dict)
+                    # either "name" or "party" should be in dict:
+                    self.assertLessEqual(len(set(("name", "party")) - set(o.keys())), 2)
+                self.assertIn("answerers", data)
 
     def setUp(self):
         self.start_date = (datetime.now() - timedelta(days=30)).date()
@@ -104,49 +123,281 @@ class Test(unittest.TestCase):
         os.makedirs(f"./testdata/{scraper_name}", exist_ok=True)
 
     def test_bb(self):
-        self.run_scraper("bb", document_types="generic")
+        self.run_scraper("bb", document_types="interpellation")
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=6,
+            start_date="2014-09-14",
+            end_date="2015-01-14",
+        )
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=4,
+            start_date="2004-09-19",
+            end_date="2005-01-19",
+        )
+        self.run_scraper(
+            "bb",
+            document_types="interpellation",
+            legislative_terms=1,
+            start_date="1990-10-14",
+            end_date="1991-01-14",
+        )
 
     def test_be(self):
-        self.run_scraper("be", document_types="written_interpellation")
+        self.run_scraper("be", document_types="interpellation")
+        self.run_scraper(
+            "be",
+            document_types="minor_interpellation",
+            legislative_terms=17,
+            start_date="2012-01-01",
+            end_date="2012-06-01",
+        )
+        self.run_scraper(
+            "be",
+            document_types="minor_interpellation",
+            legislative_terms=13,
+            start_date="1996-01-01",
+            end_date="1996-06-01",
+        )
+        self.run_scraper(
+            "be",
+            document_types="minor_interpellation",
+            legislative_terms=11,
+            start_date="1990-01-01",
+            end_date="1990-06-01",
+        )
 
     def test_bw(self):
-        self.run_scraper("bw", document_types="minor_interpellation")
+        self.run_scraper(
+            "bw",
+            document_types="minor_interpellation",
+            start_date="2021-01-01",
+            end_date="2021-06-01",
+        )
+        self.run_scraper(
+            "bw",
+            document_types="minor_interpellation",
+            legislative_terms=16,
+            start_date="2017-01-01",
+            end_date="2017-06-01",
+        )
+        self.run_scraper(
+            "bw",
+            document_types="minor_interpellation",
+            legislative_terms=12,
+            start_date="1998-01-01",
+            end_date="1998-06-01",
+        )
+        self.run_scraper(
+            "bw",
+            document_types="minor_interpellation",
+            legislative_terms=9,
+            start_date="1985-01-01",
+            end_date="1985-06-01",
+        )
         # self.run_scraper("bw", document_types="major_interpellation")
 
     def test_by(self):
-        self.run_scraper("by", document_types="minor_interpellation")
+        self.run_scraper(
+            "by", legislative_terms=18, document_types="minor_interpellation"
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=15,
+            document_types="minor_interpellation",
+            start_date="2005-01-01",
+            end_date="2005-06-01",
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=8,
+            document_types="minor_interpellation",
+            start_date="1975-01-01",
+            end_date="1975-06-01",
+        )
+        self.run_scraper(
+            "by",
+            legislative_terms=5,
+            document_types="minor_interpellation",
+            start_date="1964-01-01",
+            end_date="1964-06-01",
+        )
         # self.run_scraper("by", document_types="major_interpellation")
+
+    def test_hb(self):
+        self.run_scraper(
+            "hb",
+            document_types="minor_interpellation",
+            start_date="2021-05-01",
+            MEMORIOUS_RATE_LIMIT=10,  # be careful with bremen!
+        )
+        # self.run_scraper("hh", document_types="major_interpellation")
 
     def test_hh(self):
         self.run_scraper("hh", document_types="minor_interpellation")
+        self.run_scraper(
+            "hh",
+            document_types="minor_interpellation",
+            legislative_terms=20,
+            start_date="2012-01-01",
+            end_date="2012-06-01",
+        )
+        self.run_scraper(
+            "hh",
+            document_types="minor_interpellation",
+            legislative_terms=16,
+            start_date="2000-01-01",
+            end_date="2000-06-01",
+        )
         # self.run_scraper("hh", document_types="major_interpellation")
 
     def test_he(self):
-        self.run_scraper("he", document_types="minor_interpellation")
+        self.run_scraper(
+            "he", document_types="minor_interpellation", start_date="2021-01-01"
+        )
+        # self.run_scraper(
+        #     "he",
+        #     document_types="minor_interpellation",
+        #     legislative_terms="WP19",
+        #     start_date="2016-01-01",
+        # )
         # self.run_scraper("he", document_types="major_interpellation")
 
     def test_mv(self):
         self.run_scraper("mv", document_types="minor_interpellation")
+        self.run_scraper(
+            "mv",
+            document_types="minor_interpellation",
+            legislative_terms=4,
+            start_date="2004-01-01",
+            end_date="2004-06-01",
+        )
+        # self.run_scraper(
+        #     "mv",
+        #     document_types="minor_interpellation",
+        #     legislative_terms=1,
+        #     start_date="1990-01-01",
+        #     end_date="1994-06-01",
+        # )
         # self.run_scraper("mv", document_types="major_interpellation")
 
     def test_ni(self):
-        self.run_scraper("ni", document_types="minor_interpellation")
+        self.run_scraper(
+            "ni", document_types="minor_interpellation", MEMORIOUS_RATE_LIMIT=10
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=15,
+            start_date="2004-01-01",
+            end_date="2004-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=12,
+            start_date="1992-01-01",
+            end_date="1992-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
+        print("waiting for ni to recover...")
+        time.sleep(30)
+        self.run_scraper(
+            "ni",
+            document_types="minor_interpellation",
+            legislative_terms=10,
+            start_date="1985-01-01",
+            end_date="1985-06-01",
+            MEMORIOUS_RATE_LIMIT=10,
+        )
         # self.run_scraper("ni", document_types="major_interpellation")
 
     def test_nw(self):
-        start_date = self.start_date - timedelta(days=30)  # nw has a lot unanswered
+        start_date = self.start_date - timedelta(days=60)  # nw has a lot unanswered
+        end_date = start_date + timedelta(days=30)
         self.run_scraper(
-            "nw", document_types="minor_interpellation", start_date=start_date
+            "nw",
+            legislative_terms=17,  # FIXME test breaks bc of wrong dates L:91
+            document_types="minor_interpellation",
+            start_date=start_date,
+            end_date=end_date,
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=15,
+            start_date="2011-01-01",
+            end_date="2011-03-01",
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=12,
+            start_date="1998-01-01",
+            end_date="1998-03-01",
+        )
+        self.run_scraper(
+            "nw",
+            document_types="minor_interpellation",
+            legislative_terms=10,
+            start_date="1988-01-01",
+            end_date="1988-03-01",
         )
         # self.run_scraper("nw", document_types="major_interpellation")
 
     def test_rp(self):
         self.run_scraper("rp", document_types="minor_interpellation")
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=16,
+            start_date="2013-01-01",
+            end_date="2013-06-01",
+        )
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=13,
+            start_date="2000-01-01",
+            end_date="2000-06-01",
+        )
+        self.run_scraper(
+            "rp",
+            document_types="minor_interpellation",
+            legislative_terms=11,
+            start_date="1990-01-01",
+            end_date="1990-06-01",
+        )
         # self.run_scraper("rp", document_types="major_interpellation")
+
+    def test_sh(self):
+        self.run_scraper(
+            "sh", document_types="minor_interpellation", legislative_terms=19
+        )
+        # self.run_scraper("sh", document_types="major_interpellation")
 
     def test_st(self):
         self.run_scraper("st", document_types="minor_interpellation")
         # self.run_scraper("st", document_types="major_interpellation")
+
+    def test_sl(self):
+        self.run_scraper("sl", document_types="minor_interpellation")
+        # self.run_scraper("sl", document_types="major_interpellation")
+
+    def test_sn(self):
+        self.run_scraper("sn", document_types="minor_interpellation")
+        # self.run_scraper(
+        #     "sn", document_types="minor_interpellation", legislative_terms=6
+        # )
+        # self.run_scraper("sn", document_types="major_interpellation")
 
     def test_th(self):
         self.run_scraper("th", document_types="minor_interpellation")

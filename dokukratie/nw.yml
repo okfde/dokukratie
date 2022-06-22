@@ -1,5 +1,6 @@
 name: nw
 description: Parlamentsdatenbank Nordrhein-Westfalen
+stealthy: true
 
 publisher:
   type: parliament
@@ -16,17 +17,18 @@ document_types:
 pipeline:
 
   init:
-    method: dokukratie.scrapers.operations:init
+    method: dokukratie.operations:init
     params:
-      url: "https://www.landtag.nrw.de/home/dokumente_und_recherche/parlamentsdatenbank/Suchergebnisse_Ladok.html"
+      url: "https://www.landtag.nrw.de/home/dokumente/dokumentensuche/parlamentsdokumente/parlamentsdatenbank-suchergebnis.html"
       dateformat: "%d.%m.%Y"
       urlparams:
         dokart: DRUCKSACHE
-        view: kurz
-      legislative_terms: 17
+      legislative_terms:
+        - 18
+        - 17
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       param_names:
         document_type: doktyp
         legislative_term: wp
@@ -36,7 +38,7 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     params:
       skip_incremental:
         urlpattern: .*view=berver$
@@ -44,34 +46,70 @@ pipeline:
       pass: parse
 
   parse:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       store:
         mime_group: documents
       include_paths:
-        - "(.//div[@class='paging_center'])[1]//img[@title='nächste Seite']/.."  # next pages
-        - ".//td/span/a[contains(text(), 'Beratungsverlauf')]/.."  # detail page
-        - ".//p[contains(text(), 'Antwort')]"  # pdf url on detail page
+        - './/a[@data-js-page="next"]'  # next pages
+        - ".//a/span[contains(text(), 'Beratungsverlauf')]/.."  # detail page
+        - './/article[@class="e-search-result"]//p[contains(text(), "Antwort")]' # pdf url on detail page
       meta:
         # on detail page
         reference: ".//p[contains(text(), 'Antwort')]/a/text()"
-        title: ".//p[@class='detailansicht'][1]/b"
-        summary: ".//p[@class='detailansicht'][2]"
-        originators: ".//p[@class='detailansicht'][1]/following-sibling::text()[2]"
-        published_at: ".//p[contains(text(), 'Antwort')]/a/following-sibling::text()[1]"
+        title: './/div[@class="e-search-result__body"]/p/strong/b'
+        interpellation_raw: './/div[@class="e-search-result__body"]/p[1]'
+        answer_raw: './/div[@class="e-search-result__body"]/p[2]'
     handle:
       fetch: fetch
-      store: clean
+      store: extract
 
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
-      dateparser:
-        dayfirst: true
+        interpellation_raw: .*\s+(Kleine\s+Anfrage|KlAnfr|Große\s+Anfrage|GrAnfr)\s+\d+\s+(?P<originators_raw>.*)\s+(Drucksache|Drs)\s+(?P<interpellation_reference>\d{1,2}\/\d+)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4}).*
+        answer_raw: Antwort\s+(?P<answerers>.*)\s+(Drucksache|Drs)\s+\d{1,2}\/\d+\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+        originators_raw:
+          store_as: originators
+          split: " , "  #  Weske, Markus Herbert SPD , Paul, Josefine; Müller, Thomas GRÜNE
+          patterns:
+            - (?P<names>.*)\s+(?P<party>\w+)(\s+)?$
+          originators_all:
+            split: ";"
+            patterns:
+              - (?P<name>.*)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store

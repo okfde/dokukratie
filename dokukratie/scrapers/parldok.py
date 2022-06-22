@@ -1,38 +1,15 @@
 from urllib.parse import urljoin
 
-from banal import clean_dict
 from memorious.operations.parse import parse_for_metadata
+from memorious_extended.incremental import skip_incremental
+from memorious_extended.util import get_value_from_xp as x
+from memorious_extended.util import re_first
 
 from .base import BaseScraper
-from .incremental import skip_incremental
-from .util import get_value_from_xp as x
-from .util import re_first
 
 
 class ParldokScraper(BaseScraper):
-    skip_incremental_config = {"key": {"data": "url"}, "target": {"stage": "store"}}
-
-    def emit_search(self, data):
-        """
-        do a post request to the search overview page for given
-        legislative_term and document_type to create a session that will be
-        passed along to the next stages
-        """
-        post_data = clean_dict(
-            {
-                "DokumententypId": data["document_type"],
-                "LegislaturperiodenNummer": data["legislative_term"],
-                "DatumVon": data.get("start_date"),
-                "DatumBis": data.get("end_date"),
-            }
-        )
-
-        res = self.context.http.post(
-            self.base_url,
-            data=post_data,
-        )
-        self.context.log.info("Search [%s]: %s" % (res.status_code, res.url))
-        self.context.emit(data={**data, **res.serialize()})
+    skip_incremental = True
 
     def emit_parse_results(self, data):
         """
@@ -44,20 +21,27 @@ class ParldokScraper(BaseScraper):
                 meta: dict for extracting metadata (key: xpath) that will
                       passed to the next stages
         """
-        res = self.context.http.rehash(data)
 
+        res = self.context.http.rehash(data)
         for item in res.html.xpath(self.context.params["item"]):
+            detail_data = {}
+            parse_for_metadata(self.context, detail_data, item)
+
             url = x(item, self.context.params["detail_url"])
             if self.version < "5.6.5":
                 url = re_first(r".*href='([\w\/\d]+)'.*", url)
-            url = urljoin(self.base_url, url)
 
-            data["url"] = data["source_url"] = url
-            if not skip_incremental(
-                self.context, data, self.skip_incremental_config, test_loops=3
-            ):
-                parse_for_metadata(self.context, data, item)
-                self.context.emit("fetch", data=data)
+            if url:
+                if not url.startswith("http"):
+                    url = urljoin(data["url"], url)
+                detail_data["url"] = detail_data["source_url"] = url
+
+                data = {**data, **detail_data}
+                # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
+                if not skip_incremental(
+                    self.context, data, self.skip_incremental, test_loops=3
+                ):
+                    self.context.emit("fetch", data=data)
 
     def emit_next_page(self, data):
         """
@@ -89,16 +73,6 @@ class ParldokScraper(BaseScraper):
 
 
 # actual used stages for pipeline defined in yaml config
-
-
-def init(context, data):
-    scraper = ParldokScraper(context)
-    scraper.emit_configuration()
-
-
-def search(context, data):
-    scraper = ParldokScraper(context)
-    scraper.emit_search(data)
 
 
 def parse_results(context, data):

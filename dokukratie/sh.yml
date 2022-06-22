@@ -1,0 +1,98 @@
+name: sh
+description: Landtagsinformationssystem Schleswig-Holstein
+stealthy: true
+
+publisher:
+  type: parliament
+  name: Schleswig-Holsteinischer Landtag
+  url: http://www.landtag.ltsh.de/
+  jurisdiction:
+    id: sh
+    name: Schleswig-Holstein
+
+document_types:
+  minor_interpellation: kleine
+  # major_interpellation: Anfragen\\Interpellation
+
+pipeline:
+  init:
+    method: dokukratie.operations:init
+    params:
+      url_template: http://lissh.lvn.parlanet.de/cgi-bin/starfinder/0?path=lisshfl.txt&id=FASTLINK&pass=&search=WP%3d{{ legislative_term }}+AND+dtyp%3dkleine&format=WEBKURZFL
+      document_types:
+        - minor_interpellation
+        # - major_interpellation
+      legislative_terms:  # earliest: 1
+        - 19
+    handle:
+      pass: fetch
+
+  fetch:
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: parse
+
+  parse:
+    method: memorious_extended.operations:parse
+    params:
+      skip_incremental:
+        target:
+          stage: store
+      store:
+        mime_group: documents
+      include_paths:
+        - ".//td[2]"  # pdf download url
+      items: ".//table[@class='tabcol']//tr"
+      meta:
+        source_url: ".//td[3]/a/@href"
+        title: ".//td[2]/b/text()"
+        meta_raw: ".//td[2]"
+    handle:
+      fetch: fetch
+      store: extract
+
+  extract:
+    method: memorious_extended.operations:regex_groups
+    params:
+      meta_raw:
+        - .*Kleine\s+Anfrage\s+(?P<originators_raw>.*)\s+und\s+Antwort\s+(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})?\s*Drucksache\s+(?P<reference>\d{1,2}\/\d+)
+      originators_raw:
+        store_as: originators
+        split: ","
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
+    handle:
+      pass: store
+
+  store:
+    method: memorious_extended.operations:store

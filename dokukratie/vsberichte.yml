@@ -37,8 +37,9 @@ pipeline:
   parse_detail:
     method: dokukratie.scrapers.operations:parse_json
     params:
-      title: title
-      url: file_url
+      extract:
+        title: title
+        url: file_url
     handle:
       pass: download
 

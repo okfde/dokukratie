@@ -14,13 +14,19 @@ metadata:
   - url
   - source_url
   - title
+  - summary
   - originators
   - answerers
+  - interpellation_date
+  - interpellation_reference
   - publisher:name  # nested keys are flattened with ":" between them
   - publisher:jurisdiction:id
   - publisher:url
   - publisher:type
+  - dataset_id
+  - dataset_label
   unique: content_hash  # unqiue identifier for files
 remote:  # simple string replacement to generate `File.public.<attr>` attributes, like:
   # url: https://dokukratie-dev.s3.eu-central-1.amazonaws.com/<scraper_name>/{_file_name}
-  uri: s3://dokukratie-dev/<scraper_name>/{_file_name}
+  uri: s3://dokukratie/<scraper_name>/{_file_name}
+  s3_key: <scraper_name>/{_file_name}

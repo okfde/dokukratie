@@ -1,7 +1,5 @@
 from packaging.version import parse as versionparse
 
-from .operations import init
-
 
 class Version:
     """
@@ -40,9 +38,3 @@ class BaseScraper:
         self.version = Version(self.scraper["version"])
         self.base_url = self.scraper["url"]
         self.context = context
-
-    def emit_configuration(self):
-        """
-        emit data for legislative terms and document types to next stage
-        """
-        init(self.context)

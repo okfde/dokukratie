@@ -1,0 +1,157 @@
+name: sl
+description: Saarland - Landtagsdokumente
+stealthy: true
+
+document_types:
+  minor_interpellation: Anfrage
+  major_interpellation: Große Anfrage
+
+publisher:
+  type: parliament
+  name: Landtag des Saarlandes
+  url: https://www.landtag-saar.de
+  jurisdiction:
+    id: sl
+    name: Saarland
+
+scraper:
+  url: https://www.landtag-saar.de
+
+pipeline:
+  init:
+    method: dokukratie.operations:init
+    params:
+      url: https://www.landtag-saar.de/umbraco/aawSearchSurfaceController/SearchSurface/GetSearchResults/
+      document_types:
+        - minor_interpellation
+      legislative_terms: 14
+    handle:
+      pass: search
+
+  search:
+    method: memorious_extended.operations:post_json
+    params:
+      data:
+        CurrentSearchTab: 1
+        Filter:
+          # StartTime: /Date(1254441600000)/
+          # EndTime: /Date(1628640000000)/
+          Periods:
+          - 14
+          - 15
+          - 16
+        KendoFilter:
+          filters:
+          - filters:
+            - field: DocumentType
+              operator: contains
+              value: Anfrage
+            logic: or
+          logic: and
+        OnlyTitle: false
+        Pageination:
+          Skip: 0
+          Take: 10
+        Sections:
+          Print: true
+        Sort:
+          SortType: 0
+          SortValue: 0
+        Value: ''
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: memorious_extended.operations:parse_jq
+    params:
+      pattern: >
+        .Items[] | {
+          title: .Title,
+          published_at: .PublicDate,
+          reference: .DocumentNumber,
+          legislative_term: .Legislative,
+          originators_raw: .DocumentAuthor,
+          answerers: .Publisher,
+          document_type: .DocumentType,
+          download_url: .FilePath,
+          operation_id: .OperationsList.FileList[0].Id}
+    handle:
+      pass: fetch_detail
+
+  fetch_detail:
+    method: memorious_extended.operations:fetch
+    params:
+      rewrite:
+        method: template
+        data: /vorgaenge/{{ operation_id }}
+      skip_incremental: True
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: memorious_extended.operations:parse
+    params:
+      store:
+        mime_group: documents
+      include_paths:
+        - (.//div[@class="operation-file-download"])[last()]
+    handle:
+      fetch: download
+      store: extract
+
+  download:
+    method: memorious_extended.operations:fetch
+    params:
+      rewrite:
+        method: replace
+        data: ["PDF", "DownloadFile.ashx"]
+    handle:
+      pass: parse_detail
+
+  extract:
+    method: memorious_extended.operations:regex_groups
+    params:
+      originators_raw:
+        store_as: originators
+        split: ";"
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - \((?P<party>.*)\)
+          - (?P<party>.*)\)
+          - \((?P<party>.*)
+          - (?P<party>.*)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
+    handle:
+      pass: store
+
+  store:
+    method: memorious_extended.operations:store

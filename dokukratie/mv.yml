@@ -1,5 +1,6 @@
 name: mv
 description: Parlamentsdokumentation Mecklenburg-Vorpommern
+stealthy: true
 
 publisher:
   type: parliament
@@ -20,23 +21,30 @@ scraper:
 
 pipeline:
   init:
-    method: dokukratie.scrapers.parldok:init
+    method: dokukratie.operations:init
     params:
       legislative_terms: 7
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       dateformat: "%d.%m.%Y"
     handle:
       pass: search
 
   search:
-    method: dokukratie.scrapers.parldok:search
+    method: memorious_extended.operations:post
+    params:
+      url: https://www.dokumentation.landtag-mv.de/parldok/formalkriterien/
+      use_data:
+        DokumententypId: document_type
+        LegislaturperiodenNummer: legislative_term
+        DatumVon: start_date
+        DatumBis: end_date
     handle:
       pass: fetch_results
 
   fetch_results:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse_results
 
@@ -48,19 +56,19 @@ pipeline:
       next_page: './/div[@class="pd_resultnavigation"]/a/@href'
       meta:
         reference: 'preceding-sibling::tr/td[@headers="result-nummer"]/text()'
-        originators: './/td[@headers="result-urheber"]/text()'
+        interpellation_raw: './/td[@headers="result-urheber"]/text()'
         published_at: 'preceding-sibling::tr/td[@headers="result-datum"]/text()'
     handle:
       next_page: fetch_results
       fetch: fetch_detail
 
   fetch_detail:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse_detail
 
   parse_detail:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       store:
         mime_group: documents
@@ -72,17 +80,53 @@ pipeline:
         keywords: ".//div[@id='content']/fieldset/table/tbody/tr[1]/td[2]"
     handle:
       fetch: fetch_detail
-      store: clean
+      store: extract
 
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
-      dateparser:
-        dayfirst: true
+      interpellation_raw: (?P<originators_raw>.*),\s+Landesregierung\s+\((?P<answerers>.*)\).*
+      originators_raw:
+        store_as: originators
+        split: ","
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - \((?P<party>.*)\)
+          - (?P<party>.*)\)
+          - \((?P<party>.*)
+          - (?P<party>.*)
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store

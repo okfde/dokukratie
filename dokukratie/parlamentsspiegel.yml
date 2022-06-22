@@ -46,6 +46,7 @@ pipeline:
         - './/ul[@class="paging"]/li[@class="next"]'  # next pages
         - './/dd[@class="link"]/a[@class="beratungsstand"]/..'  # detail page
         - './/table//a/img[@alt="Dokument anzeigen"]/../..'  # external download url
+        - './/iframe'
       meta:
         # on detail page
         title: ".//table/tr[2]/td[2]/text()[1]"

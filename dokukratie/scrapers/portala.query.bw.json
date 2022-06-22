@@ -1,0 +1,23 @@
+{
+    "action": "SearchAndDisplay",
+    "report": {
+        "rhl": "main",
+        "rhlmode": "add",
+        "format": "suchergebnis-vorgang-full",
+        "mime": "html",
+        "sort": "SORT01/D SORT02/D SORT03"
+    },
+    "search": {
+        "lines": {
+            "l1": "%(legislative_term)s",
+            "l2": "%(start_date)s",
+            "l3": "%(end_date)s",
+            "l4": "%(document_type)s"
+        },
+        "serverrecordname": "vorgang"
+    },
+    "sources": [
+        "Star"
+    ]
+}
+

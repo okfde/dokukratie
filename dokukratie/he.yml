@@ -1,5 +1,6 @@
 name: he
 description: Parlamentsdatenbank Hessen
+stealthy: true
 
 publisher:
   type: parliament
@@ -21,19 +22,19 @@ document_types:
 pipeline:
 
   init:
-    method: dokukratie.scrapers.starweb:init
+    method: dokukratie.operations:init
     params:
-      legislative_terms: WP20
+      legislative_terms: WP20  # FIXME
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       url: http://starweb.hessen.de/starweb/LIS/servlet.starweb?path=LIS/PdPi.web
     handle:
       pass: fetch
 
   # initialize session
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: search
 
@@ -64,18 +65,18 @@ pipeline:
       meta:
         title: './/span[@name="OFR_Betreff"]'
         reference:  './/span[@name="OFR_Drs"]'
-        originators: './/span[@name="OFR_Initiator"]'
+        originators_raw: './/span[@name="OFR_Initiator"]'
     handle:
       next_page: search
       pass: fetch_detail
 
   fetch_detail:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse_detail
 
   parse_detail:
-    method: dokukratie.scrapers.operations:parse
+    method: memorious_extended.operations:parse
     params:
       store:
         mime_group: documents
@@ -83,21 +84,54 @@ pipeline:
           - './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")][last()]/following-sibling::a[1]'  # link to pdf download page
           - './/a[contains(text(), "Originaldokument als PDF-Datei")]'  # actual link to pdf
       meta:
-        published_at: './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")]'
+        meta_raw: './/table[@id="listTable"]//pre/text()[contains(., "Drucksache")]'
     handle:
       fetch: fetch_detail
-      store: clean
+      store: extract
 
-  # extract & cleanup metadata
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      extractors:
-        published_at: \s?(\d{2}\.\d{2}\.\d{4})\sDrucksache.*
-      dateparser:
-        dayfirst: true
+      meta_raw: (?P<summary>.*)\s+Kleine\s+Anfrage\s+(?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+und\s+Antwort\s+(?P<published_at>\d{2}\.\d{2}\.\d{4}).*
+      originators_raw:
+        store_as: originators
+        split: ";"
+        patterns:
+          - (\s+)?(?P<name>.*),\s+(?P<party>[\w\s]+)(\s+)?$
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      defaults:
+        answerers: Landesregierung
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store

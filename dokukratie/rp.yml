@@ -1,5 +1,6 @@
 name: rp
 description: OPAL Rheinland-Pfalz
+stealthy: true
 
 publisher:
   type: parliament
@@ -16,24 +17,24 @@ scraper:
 
 document_types:
   major_interpellation: GROßE ANFRAGE
-  minor_interpellation: KLEINE ANFRAGE UND ANTWORT; ANTWORT
+  minor_interpellation: KLEINE ANFRAGE UND ANTWORT; ANTWORT; KLEINE ANFRAGE
 
 pipeline:
 
   init:
-    method: dokukratie.scrapers.starweb:init
+    method: dokukratie.operations:init
     params:
       legislative_terms: 18
       document_types:
         - minor_interpellation
-        # - major_interpellation
+        - major_interpellation
       url: https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.web
     handle:
       pass: fetch
 
   # initialize session
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: search
 
@@ -43,10 +44,12 @@ pipeline:
       fields:
         legislative_term: 02_PDOKU_WP
         document_type: 05_PDOKU_DTYP
+        start_date: 06_PDOKU_FASTDATV
+        end_date: 07_PDOKU_FASTDATB
       formdata:
         __action: 21
         03_PDOKU_DART: D
-        18_PDOKU_Anfrage: DBESUP="DTYPF=ANTWORT"  # only with answers
+        # 18_PDOKU_Anfrage: DBESUP="DTYPF=ANTWORT"  # only with answers
         # LimitMaximumHitCount: S99{ITEMS+1:10000000}
     handle:
       pass: parse_results
@@ -61,35 +64,71 @@ pipeline:
         formdata:
           __action: 52
       meta:
-        # reference, originators, etc..: store the full paragraph for each field,
-        # extract the granular information later in `clean` stage
+        # extract the granular information later in `extract` stage
         title: './/tr[@name="Repeat_WHET"]/td/b'
         keywords: './/a[@name="ThesaurusLink"]/text()'
-        reference:  './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
-        originators: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
-        answerers: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
-        published_at: './/tr[@name="Repeat_Fund"]//div[@class="fundstelle"]/div[@class="morefund"]'
+        interpellation_raw:  './/tr[@name="Repeat_Fund"]//div[@class="morefund"][contains(text(), "Anfr")]'
+        answer_raw:  './/tr[@name="Repeat_Fund"]//div[@class="morefund"][contains(text(), "Antw")]'
     handle:
       next_page: search
       pass: download
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: extract
+
+  extract:
+    method: memorious_extended.operations:regex_groups
+    params:
+      interpellation_raw:
+        - (Kleine|Große)\s+Anfrage\s+([\d\s]+)?(?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+Drucksache\s+(?P<interpellation_reference>\d{1,2}\/\d+)
+        - (KlAnfr|GrAnfr|Kleine\sAnfrage)\s+([\d\s]+)?(?P<originators_raw>.*)\s+(Antw|Antwort)\s(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\+s(?P<reference>\d{1,2}\/\d+)
+      answer_raw:
+        - Antwort\s+(.*),\s+(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+Drucksache\s+(?P<reference>\d{1,2}\/\d+)
+        - (KlAnfr|GrAnfr|Kleine\sAnfrage)\s+([\d\s]+)?(?P<originators_raw>.*)\s+(Antw|Antwort)\s(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\+s(?P<reference>\d{1,2}\/\d+)
+      originators_raw:
+        store_as: originators
+        split: ","
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - \((?P<party>.*)\)
+          - (?P<party>.*)\)
+          - \((?P<party>.*)
+          - (?P<party>.*)
+
     handle:
       pass: clean
 
-  # extract & cleanup metadata
+  # clean and validate metadata
   clean:
-    method: dokukratie.scrapers.operations:clean
+    method: dokukratie.operations:clean
     params:
-      extractors:
-        published_at: \d{2}\.\d{2}\.\d{4}
-        originators: Kleine\s+Anfrage\s+[\d\s]+(.+?)\s+und
-        answerers: .*\s+und\s+Antwort\s+(.+?)\s
-      dateparser:
-        dayfirst: true
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store

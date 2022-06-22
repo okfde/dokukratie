@@ -1,14 +1,12 @@
 # https://github.com/okfde/sehrgutachten/blob/master/app/scrapers/wd_ausarbeitungen_scraper.rb
 
 import re
-from datetime import date, datetime
+from datetime import datetime
 from urllib.parse import urljoin
 
-from dateutil.parser import parse as dateparse
 from furl import furl
-
-from .incremental import skip_incremental
-from .util import get_value_from_xp as x
+from memorious_extended.incremental import skip_incremental
+from memorious_extended.util import get_value_from_xp as x
 
 MONTHS = (
     "januar",
@@ -45,15 +43,6 @@ def _clean_date(value):
         if month in value:
             value = value.replace(month, "%s." % str(i + 1).zfill(2))
             return datetime.strptime(value, "%d.%m.%Y").date().isoformat()
-
-
-def ensure_date(value, **parsekwargs):
-    if isinstance(value, date):
-        return value
-    if isinstance(value, str):
-        value = dateparse(value, **parsekwargs)
-    if isinstance(value, datetime):
-        return value.date()
 
 
 def parse(context, data):

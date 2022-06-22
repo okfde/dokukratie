@@ -1,5 +1,6 @@
 name: bw
 description: PARLIS Baden-Württemberg
+stealthy: true
 
 publisher:
   type: parliament
@@ -9,48 +10,132 @@ publisher:
     id: bw
     name: Baden-Württemberg
 
+scraper:
+  name: portala
+  url: https://parlis.landtag-bw.de/parlis/
+
 document_types:
-  minor_interpellation: KA
-  major_interpellation: GA
+  minor_interpellation: Kleine Anfrage
+  major_interpellation: Große Anfrage
 
 pipeline:
+
+  # emit scrape criteria
   init:
-    method: dokukratie.scrapers.operations:init
+    method: dokukratie.operations:init
     params:
-      url: "https://www.landtag-bw.de/cms/render/live/de/sites/LTBW/home/dokumente/drucksachen/contentBoxes/drucksachen.xhr?limit=10&answerState=endgueltig"
+      url: https://parlis.landtag-bw.de/parlis/
       dateformat: "%d.%m.%Y"
-      param_names:
-        document_type: initiativeType
-        start_date: sachstandBegin
-        end_date: sachstandEnd
+      legislative_terms: 17  # earliest: 9
       document_types:
         - minor_interpellation
-        - major_interpellation
+        # - major_interpellation
     handle:
       pass: fetch
 
+  # initialize session for cookie & referer
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
-      pass: parse
+      pass: search
 
-  parse:
-    method: dokukratie.scrapers.bw:parse
+  # post request to actual search
+  search:
+    method: dokukratie.scrapers.portala:search
     params:
+      url: https://parlis.landtag-bw.de/parlis/browse.tt.json
+      query_template: dokukratie/scrapers/portala.query.bw.json
+    handle:
+      pass: parse_json
+
+
+  # filter json data
+  parse_json:
+    method: memorious_extended.operations:parse_jq
+    params:
+      pattern: '{item_count: .item_count, report_id: .report_id}'
+    handle:
+      pass: fetch_results
+
+  # fetch response based on `report_id`
+  fetch_results:
+    method: dokukratie.scrapers.portala:fetch_results
+    params:
+      url: https://parlis.landtag-bw.de/parlis/report.tt.html
+    handle:
+      pass: parse_results
+
+  parse_results:
+    method: memorious_extended.operations:parse
+    params:
+      items: './/div[contains(@class, "efxRecordRepeater")]'
+      include_paths:
+        - './/a[@class="fundstellenLinks"]'
+      meta:
+        title: './/a[@class="efxZoomShort-Vorgang"]'
+        originators_raw: './/dl/dt[contains(text(), "Initiative")]/following-sibling::dd[1]/text()'
+        interpellation_raw: './/a[@class="fundstellenLinks"]'
+        procedure_id: './/dl/dt[contains(text(), "Vorgangs-ID")]/following-sibling::dd[1]/text()'
       skip_incremental:
+        key:
+          data: procedure_id
         target:
           stage: store
     handle:
-      fetch: fetch
-      clean: clean
+      fetch: download  # yield pdf urls and detail metadata
 
-  clean:
-    method: dokukratie.scrapers.operations:clean
+  download:
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: extract
+
+  extract:
+    method: memorious_extended.operations:regex_groups
     params:
-      dateparser:
-        dayfirst: true
+      interpellation_raw:
+        - .*(Schriftliche|Kleine)\s+Anfrage(.*)?\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+Drucksache\s+(?P<interpellation_reference>\d{1,2}\/\d+).*
+        - .*(Schriftliche|Kleine)\s+Anfrage(.*)?\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+und\s+Antwort\s+(?P<answerers>.*)\s+Drucksache\s+(?P<reference>\d{1,2}\/\d+).*
+        - .*(Schriftliche|Kleine)\s+Anfrage\s+(?P<originators_raw>.*)?(\s+)?(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+und\s+Antwort\s+Drucksache\s+(?P<reference>\d{1,2}\/\d+).*
+      originators_raw:
+        store_as: originators
+        split: ","
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - (?P<name>.*)\s+(?P<party>[A-ZÄÖÜ]+)  # Weichert GRÜNE
+    handle:
+      pass: clean
+
+  # clean and validate metadata
+  clean:
+    method: dokukratie.operations:clean
+    params:
+      defaults:
+        answerers: Landesregierung
+      values:
+        foreign_id: "{publisher[jurisdiction][id]}-{reference}"
+      required:
+        - legislative_term
+        - document_type
+        - reference
+        - foreign_id
+        - title
+        - originators
+        - answerers
+        - published_at
+        - publisher
+      typing:
+        ignore:
+          - modified_at
+          - retrieved_at
+          - reference
+          - interpellation_reference
+        dateparserkwargs:
+          dayfirst: true
+      drop:
+        - page
+        - formdata
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
