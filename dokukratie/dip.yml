@@ -20,7 +20,7 @@ pipeline:
       url: https://search.dip.bundestag.de/api/v1/drucksache
       document_types:
         - minor_interpellation
-      legislative_terms: 19
+      legislative_terms: 20
       urlparams:
         apikey: GmEPb1B.bfqJLIhcGAsH9fTJevTglhFpCoZyAAAdhp
         f.zuordnung: BT
