@@ -89,6 +89,7 @@ pipeline:
   fetch_results:
     method: memorious_extended.operations:fetch
     params:
+      test_loops: 5
       url: https://edas.landtag.sachsen.de/parlamentsdokumentation/parlamentsarchiv/trefferliste.aspx?NavSeite=1
       pagination:
         param: NavSeite
@@ -101,6 +102,7 @@ pipeline:
   parse_results:
     method: memorious_extended.operations:parse_listing
     params:
+      test_loops: 5
       parse_html: false
       emit: true
       items: './/td[@class="dxdvItem_EDAS dx-al"]'

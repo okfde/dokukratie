@@ -4,7 +4,7 @@ stealthy: true
 
 document_types:
   minor_interpellation: Anfrage
-  # major_interpellation: Große Anfrage
+  major_interpellation: Große Anfrage
 
 publisher:
   type: parliament
@@ -70,7 +70,7 @@ pipeline:
           published_at: .PublicDate,
           reference: .DocumentNumber,
           legislative_term: .Legislative,
-          originators: .DocumentAuthor,
+          originators_raw: .DocumentAuthor,
           answerers: .Publisher,
           document_type: .DocumentType,
           download_url: .FilePath,
@@ -84,9 +84,7 @@ pipeline:
       rewrite:
         method: template
         data: /vorgaenge/{{ operation_id }}
-      skip_incremental:
-        target:
-          stage: store
+      skip_incremental: True
     handle:
       pass: parse_detail
 
@@ -97,12 +95,9 @@ pipeline:
         mime_group: documents
       include_paths:
         - (.//div[@class="operation-file-download"])[last()]
-      meta:
-        originators: .//div[@class="document-author"]
-        answerers: .//div[@class="document-publisher"]
     handle:
       fetch: download
-      store: clean
+      store: extract
 
   download:
     method: memorious_extended.operations:fetch
@@ -112,6 +107,21 @@ pipeline:
         data: ["PDF", "DownloadFile.ashx"]
     handle:
       pass: parse_detail
+
+  extract:
+    method: memorious_extended.operations:regex_groups
+    params:
+      originators_raw:
+        store_as: originators
+        split: ";"
+        patterns:
+          - (?P<name>.*)\s+\((?P<party>.*)\)
+          - \((?P<party>.*)\)
+          - (?P<party>.*)\)
+          - \((?P<party>.*)
+          - (?P<party>.*)
+    handle:
+      pass: clean
 
   # clean and validate metadata
   clean:
