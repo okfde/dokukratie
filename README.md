@@ -40,11 +40,16 @@ German state parliaments:
 - [![be](https://github.com/okfde/dokukratie/actions/workflows/be.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/be.yml) [be - Abgeordnetenhaus Berlin](#be)
 - [![bw](https://github.com/okfde/dokukratie/actions/workflows/bw.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/bw.yml) [bw - Landtag von Baden-Württemberg](#bw)
 - [![by](https://github.com/okfde/dokukratie/actions/workflows/by.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/by.yml) [by - Bayerischer Landtag](#by)
-- [![hh](https://github.com/okfde/dokukratie/actions/workflows/hh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hh.yml) [hh - Hamburgische Bürgerschaft](#hh)
+- [![hb](https://github.com/okfde/dokukratie/actions/workflows/hb.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hb.yml) [hb - Bremische Bürgerschaft](#hb)
 - [![he](https://github.com/okfde/dokukratie/actions/workflows/he.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/he.yml) [he - Hessischer Landtag](#he)
+- [![hh](https://github.com/okfde/dokukratie/actions/workflows/hh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/hh.yml) [hh - Hamburgische Bürgerschaft](#hh)
 - [![mv](https://github.com/okfde/dokukratie/actions/workflows/mv.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/mv.yml) [mv - Landtag Mecklenburg-Vorpommern](#mv)
 - [![ni](https://github.com/okfde/dokukratie/actions/workflows/ni.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/ni.yml) [ni - Landtag Niedersachsen](#ni)
+- [![nw](https://github.com/okfde/dokukratie/actions/workflows/nw.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/nw.yml) [nw - Landtag Nordrhein Westfalen](#nw)
 - [![rp](https://github.com/okfde/dokukratie/actions/workflows/rp.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/rp.yml) [rp - Landtag Rheinland-Pfalz](#rp)
+- [![sh](https://github.com/okfde/dokukratie/actions/workflows/sh.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/sh.yml) [sh - Landtag Schleswig-Holstein](#sh)
+- [![sl](https://github.com/okfde/dokukratie/actions/workflows/sl.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/sl.yml) [sl - Landtag des Saarlandes](#sl)
+- [![sn](https://github.com/okfde/dokukratie/actions/workflows/sn.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/sn.yml) [sn - Sächsischer Landtag](#sn)
 - [![st](https://github.com/okfde/dokukratie/actions/workflows/st.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/st.yml) [st - Landtag von Sachsen-Anhalt](#st)
 - [![th](https://github.com/okfde/dokukratie/actions/workflows/th.yml/badge.svg)](https://github.com/okfde/dokukratie/actions/workflows/th.yml) [th - Thüringer Landtag](#th)
 
@@ -107,27 +112,14 @@ will shut down and return a 502 Error.
 `written_interpellation` (Both "Große" and "Kleine" anfragen)
 
 
-
 ### bw
 
 **Landtag von Baden-Württemberg**
 
     memorious run bw
 
-For convenience, the scraper directly the xhr request result from this base site: https://www.landtag-bw.de/home/dokumente/drucksachen.html
-
-Example:
-
-https://www.landtag-bw.de/cms/render/live/de/sites/LTBW/home/dokumente/drucksachen/contentBoxes/drucksachen.xhr?limit=10&initiativeType=KA&offset=0
-
-There is no explicit option for `LEGISLATIVE_TERMS`, but to filter for the
-actual terms of BW, you can use `START_DATE` and `END_DATE` ranges that match
-the terms.
-
-
-#### `DOCUMENT_TYPES`:
-- `minor_interpellation`
-- `major_interpellation`
+Looks the same as [be](#be) ("portala") but uses a different
+[query template](./dokukratie/scrapers/portala.query.bw.json)
 
 
 ### by
@@ -148,6 +140,25 @@ The scraper uses this result page: https://www.bayern.landtag.de/parlament/dokum
 - `minor_interpellation`
 - `major_interpellation`
 
+
+### hb
+
+**Bremische Bürgerschaft**
+
+    memorious run hb
+
+The scraper uses the [starweb](#starweb) implementation using this form:
+https://paris.bremische-buergerschaft.de/starweb/paris/servlet.starweb?path=paris/LISSH.web
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 20
+
+**earliest**: TODO
+
+#### `DOCUMENT_TYPES`:
+- `minor_interpellation`
+- `major_interpellation`
 
 ### he
 
@@ -222,6 +233,24 @@ https://www.nilas.niedersachsen.de/starweb/NILAS/servlet.starweb?path=NILAS/liss
 
 **earliest**: 10
 
+### nw
+
+**Landtag Nordrhein-Westfalen**
+
+The scraper uses the base url
+https://www.landtag.nrw.de/home/dokumente/dokumentensuche/parlamentsdokumente/parlamentsdatenbank-suchergebnis.html?dokart=DRUCKSACHE&doktyp=KLEINE%20ANFRAGE&wp=18
+and manipulates `GET` parameters
+
+#### `LEGISLATIVE_TERMS`:
+
+**current**: 18
+
+**earliest**: 10
+
+#### `DOCUMENT_TYPES`:
+- `minor_interpellation`
+- `major_interpellation`
+
 ### rp
 
 **Landtag Rheinland-Pfalz**
@@ -240,6 +269,30 @@ https://opal.rlp.de/starweb/OPAL_extern/servlet.starweb?path=OPAL_extern/PDOKU.w
 #### `DOCUMENT_TYPES`:
 - `minor_interpellation`
 - `major_interpellation`
+
+### sh
+
+**Landtag Schleswig-Holstein**
+
+The scraper uses this base url
+http://lissh.lvn.parlanet.de/cgi-bin/starfinder/0?path=lisshfl.txt&id=FASTLINK&pass=&search=WP%3D19+AND+dtyp%3Dkleine&format=WEBKURZFL
+and adjusts `GET` parameters.
+
+### sl
+
+**Landtag des Saarlandes**
+
+The scraper posts json queries to this url https://www.landtag-saar.de/umbraco/aawSearchSurfaceController/SearchSurface/GetSearchResults/
+
+### sn
+
+**Sächsischer Landtag**
+
+This thing is just annoying: https://edas.landtag.sachsen.de/
+
+But [the scraper](./dokukratie/sn.yml) does work, more or less.
+
+For now only the current `LEGISLATIVE_TERM` (7) is possible.
 
 ### st
 

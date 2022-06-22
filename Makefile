@@ -28,7 +28,6 @@ sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta se
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
 
 # all the things
-<<<<<<< HEAD
 config.states: bb.config be.config bw.config by.config hb.config hh.config he.config mv.config ni.config nw.config rp.config sh.config sl.config sn.config st.config th.config
 action.states: bb.action be.action bw.action by.action hb.action hh.action he.action mv.action ni.action nw.action rp.action sh.action sl.action sn.action st.action th.action
 pull.states: bb.pull be.pull bw.pull by.pull hb.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull sh.pull sl.pull sn.pull st.pull th.pull
@@ -37,7 +36,6 @@ upload.states: bb.upload be.upload bw.upload by.upload hb.upload hh.upload he.up
 push.states: bb.push be.push bw.push by.push hb.push hh.push he.push mv.push ni.push nw.push rp.push sh.push sl.push sn.push st.push th.push
 download.states: bb.download be.download bw.download by.download hb.download hh.download he.download mv.download ni.download nw.download rp.download sh.download sl.download sn.download st.download th.download
 sync.states: bb.sync be.sync bw.sync by.sync hb.sync hh.sync he.sync mv.sync ni.sync nw.sync rp.sync sh.sync sl.sync sn.sync st.sync th.sync
-=======
 config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
 action.states: bb.action bw.action by.action hh.action he.action mv.action ni.action nw.action rp.action st.action th.action
 pull.states: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
