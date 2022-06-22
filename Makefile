@@ -28,15 +28,14 @@ sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta se
 vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
 
 # all the things
-config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
-action.states: bb.action bw.action by.action hh.action he.action mv.action ni.action nw.action rp.action st.action th.action
-pull.states: bb.pull bw.pull by.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull st.pull th.pull
-mmmeta.states: bb.mmmeta bw.mmmeta by.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta st.mmmeta th.mmmeta
-upload.states: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
-push.states: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
-download.states: bb.download bw.download by.download hh.download he.download mv.download ni.download nw.download rp.download st.download th.download
-download.states: bb.download bw.download by.download hh.download he.download mv.download ni.download nw.download rp.download st.download th.download
-sync.states: states.config states.pull states.mmmeta states.upload
+config.states: bb.config be.config bw.config by.config hb.config hh.config he.config mv.config ni.config nw.config rp.config sh.config sl.config sn.config st.config th.config
+action.states: bb.action be.action bw.action by.action hb.action hh.action he.action mv.action ni.action nw.action rp.action sh.action sl.action sn.action st.action th.action
+pull.states: bb.pull be.pull bw.pull by.pull hb.pull hh.pull he.pull mv.pull ni.pull nw.pull rp.pull sh.pull sl.pull sn.pull st.pull th.pull
+mmmeta.states: bb.mmmeta be.mmmeta bw.mmmeta by.mmmeta hb.mmmeta hh.mmmeta he.mmmeta mv.mmmeta ni.mmmeta nw.mmmeta rp.mmmeta sh.mmmeta sl.mmmeta sn.mmmeta st.mmmeta th.mmmeta
+upload.states: bb.upload be.upload bw.upload by.upload hb.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload sh.upload sl.upload sn.upload st.upload th.upload
+push.states: bb.push be.push bw.push by.push hb.push hh.push he.push mv.push ni.push nw.push rp.push sh.push sl.push sn.push st.push th.push
+download.states: bb.download be.download bw.download by.download hb.download hh.download he.download mv.download ni.download nw.download rp.download sh.download sl.download sn.download st.download th.download
+sync.states: bb.sync be.sync bw.sync by.sync hb.sync hh.sync he.sync mv.sync ni.sync nw.sync rp.sync sh.sync sl.sync sn.sync st.sync th.sync
 
 config: config.states dip.config sehrgutachten.config
 pull: pull.states dip.pull sehrgutachten.pull
@@ -71,9 +70,6 @@ install.dev: install
 
 install.prod: install
 	pip install -r requirements-prod.txt
-
-install.test: install.dev
-	pip install twine coverage nose moto pytest pytest-cov black flake8 isort
 
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta

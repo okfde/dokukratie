@@ -2,3 +2,12 @@ isort
 flake8
 black
 ipdb
+twine
+coverage
+nose
+moto
+pytest
+pytest-cov
+black
+flake8
+isort
