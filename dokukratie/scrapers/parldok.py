@@ -9,7 +9,7 @@ from .base import BaseScraper
 
 
 class ParldokScraper(BaseScraper):
-    skip_incremental_config = {"key": {"data": "url"}, "target": {"stage": "store"}}
+    skip_incremental = True
 
     def emit_parse_results(self, data):
         """
@@ -39,7 +39,7 @@ class ParldokScraper(BaseScraper):
                 data = {**data, **detail_data}
                 # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
                 if not skip_incremental(
-                    self.context, data, self.skip_incremental_config, test_loops=3
+                    self.context, data, self.skip_incremental, test_loops=3
                 ):
                     self.context.emit("fetch", data=data)
 

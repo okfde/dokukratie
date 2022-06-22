@@ -12,7 +12,6 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": ["dokukratie = dokukratie.cli:cli"],
-        # "dokukratie.operations": ["init = dokukratie.operations.initialize:init"],
     },
     zip_safe=False,
     install_requires=[

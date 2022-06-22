@@ -13,10 +13,7 @@ from .base import BaseScraper
 
 
 class StarwebScraper(BaseScraper):
-    skip_incremental_config = {
-        "key": {"data": "url"},
-        "target": {"stage": "store"},
-    }
+    skip_incremental = True
     form_xp = './/form[@name="__form"]'
 
     def emit_search(self, data):
@@ -94,9 +91,7 @@ class StarwebScraper(BaseScraper):
                 data = {**data, **detail_data}
 
                 # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
-                if not skip_incremental(
-                    self.context, data, self.skip_incremental_config
-                ):
+                if not skip_incremental(self.context, data, self.skip_incremental):
                     self.context.emit(data=data)
 
         # pagination
