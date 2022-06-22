@@ -29,10 +29,18 @@ jobs:
           - 6379:6379
     env:
       ARCHIVE_TYPE: s3
+      ARCHIVE_BUCKET: ${{ secrets.ARCHIVE_BUCKET }}
+      ARCHIVE_ENDPOINT_URL: ${{ secrets.ARCHIVE_ENDPOINT_URL }}
+      DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: eu-central-1
+      AWS_DEFAULT_REGION: eu-central-1
       MEMORIOUS_CONFIG_PATH: dokukratie
       MEMORIOUS_EXPIRE: 30
       MEMORIOUS_HTTP_TIMEOUT: 60
       MEMORIOUS_CONTINUE_ON_ERROR: 1
+      MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
       REDIS_URL: redis://localhost:6379/0
     steps:
       - uses: actions/checkout@v2
@@ -51,18 +59,10 @@ jobs:
           pip install --no-cache-dir -q -e .
           pip install --no-cache-dir -q -r requirements-prod.txt
       - name: Pull mmmeta
-        env:
-          DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           make parlamentsspiegel.pull
       - name: Run crawler
         env:
-          MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
-          ARCHIVE_BUCKET: ${{ secrets.ARCHIVE_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
           LEGISLATIVE_TERMS: ${{ github.event.inputs.legislative_term }}
@@ -75,9 +75,5 @@ jobs:
           make parlamentsspiegel.mmmeta
       - name: Upload data
         if: always()
-        env:
-          DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
           make parlamentsspiegel.upload

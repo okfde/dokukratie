@@ -88,13 +88,13 @@ install.test: install.dev
 	MMMETA=./data/store/$* mmmeta generate
 
 %.pull:
-	aws s3 sync s3://$(DATA_BUCKET)/$*/_mmmeta/db/ ./data/store/$*/_mmmeta/db
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$*/_mmmeta/db/ ./data/store/$*/_mmmeta/db
 
 %.push:
-	aws s3 sync --exclude "*.db*" ./data/store/$*/_mmmeta/ s3://$(DATA_BUCKET)/$*/_mmmeta
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*.db*" ./data/store/$*/_mmmeta/ s3://$(DATA_BUCKET)/$*/_mmmeta
 
 %.upload:
-	aws s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
 %.download:
 	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$* ./data/store/$*

@@ -19,6 +19,9 @@ setup(
         "memorious",
         "memorious-extended @ git+https://github.com/simonwoerpel/memorious-extended.git",  # noqa
         "mmmeta",
+        "furl",
+        "packaging",
         "pyicu",
+        "regex==2022.3.2",
     ],
 )
