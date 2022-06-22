@@ -1,0 +1,83 @@
+name: hb
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start date'
+      end_date:
+        description: 'End date'
+      legislative_term:
+        description: 'Legislative term'
+      document_type:
+        description: 'Document type'
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    env:
+      ARCHIVE_TYPE: s3
+      MEMORIOUS_CONFIG_PATH: dokukratie
+      MEMORIOUS_EXPIRE: 30
+      MEMORIOUS_HTTP_TIMEOUT: 60
+      MEMORIOUS_CONTINUE_ON_ERROR: 1
+      REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: main
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get install -y -qq libicu-dev libpq-dev
+          pip install --no-cache-dir -q pyicu awscli
+          pip install --no-cache-dir -q -e .
+          pip install --no-cache-dir -q -r requirements-prod.txt
+      - name: Pull mmmeta
+        env:
+          DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          make hb.pull
+      - name: Run crawler
+        env:
+          MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
+          ARCHIVE_BUCKET: ${{ secrets.ARCHIVE_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+          LEGISLATIVE_TERMS: ${{ github.event.inputs.legislative_term }}
+          DOCUMENT_TYPES: ${{ github.event.inputs.document_type }}
+        run: |
+          make hb.run_prod
+      - name: Generate mmmeta
+        if: always()
+        run: |
+          make hb.mmmeta
+      - name: Upload data
+        if: always()
+        env:
+          DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          make hb.upload
