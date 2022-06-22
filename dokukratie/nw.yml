@@ -23,7 +23,9 @@ pipeline:
       dateformat: "%d.%m.%Y"
       urlparams:
         dokart: DRUCKSACHE
-      legislative_terms: 17
+      legislative_terms:
+        - 18
+        - 17
       document_types:
         - minor_interpellation
         - major_interpellation
