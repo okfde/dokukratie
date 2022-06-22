@@ -1,7 +1,7 @@
 from banal import ensure_list, is_mapping
 from furl import furl
 
-from .incremental import skip_incremental
+from memorious_extended.incremental import skip_incremental
 
 
 def _test(data, key, value):
@@ -34,7 +34,6 @@ def parse(context, data):
                 data["title"] = document["titel"]
                 is_answer = document["drucksachetyp"] == "Antwort"
                 data["is_answer"] = is_answer
-                emitted_yet = False
                 if not is_answer:
                     data["originators"] = [
                         i["titel"]
@@ -58,23 +57,25 @@ def parse(context, data):
                             % process["id"]
                         )
                         fu.args["apikey"] = apikey
+
+                        # emit to fetch reference stage
                         context.emit(
                             "fetch_reference",
                             data={**data, **{"document": document, "url": fu.url}},
                         )
-                        emitted_yet = True
+                        continue
 
-                if not emitted_yet:
-                    context.emit(
-                        "download",
-                        data={
-                            **data,
-                            **{
-                                "url": document["fundstelle"]["pdf_url"],
-                                "document": document,
-                            },
+                # directly emit to
+                context.emit(
+                    "download",
+                    data={
+                        **data,
+                        **{
+                            "url": document["fundstelle"]["pdf_url"],
+                            "document": document,
                         },
-                    )
+                    },
+                )
 
     # next page
     fu = furl(data["url"])

@@ -15,14 +15,14 @@ publisher:
 
 pipeline:
   init:
-    method: dokukratie.scrapers.base:init
+    method: dokukratie.operations:init
     params:
       url: https://search.dip.bundestag.de/api/v1/drucksache
       document_types:
         - minor_interpellation
       legislative_terms: 19
       urlparams:
-        apikey: N64VhW8.yChkBUIJeosGojQ7CSR2xwLf3Qy7Apw464
+        apikey: GmEPb1B.bfqJLIhcGAsH9fTJevTglhFpCoZyAAAdhp
         f.zuordnung: BT
       param_names:
         start_date: f.datum.start
@@ -31,16 +31,17 @@ pipeline:
       pass: fetch
 
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
+    params:
+      test_runs: 3
     handle:
       pass: parse
 
   parse:
     method: dokukratie.scrapers.dip:parse
     params:
-      skip_incremental:
-        target:
-          stage: store
+      skip_incremental: True
+      test_runs: 3
     handle:
       cursor: fetch
       download: download
@@ -48,7 +49,7 @@ pipeline:
 
   # if is_answer
   fetch_reference:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: parse_reference
 
@@ -58,14 +59,14 @@ pipeline:
       pass: download
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: clean
 
   clean:
-    method: dokukratie.scrapers.operations:clean
+    method: dokukratie.operations:clean
     handle:
       pass: store
 
   store:
-    method: dokukratie.scrapers.operations:store
+    method: memorious_extended.operations:store
