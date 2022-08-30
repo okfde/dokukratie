@@ -25,7 +25,7 @@ pipeline:
     method: dokukratie.operations:init
     params:
       # legislative_terms: 18  # earliest: 11
-      legislative_terms: 18
+      legislative_terms: 19
       document_types: interpellation
       url: https://pardok.parlament-berlin.de/portala/browse.tt.html
       dateformat: "%Y %m %d"
@@ -93,7 +93,7 @@ pipeline:
     method: memorious_extended.operations:regex_groups
     params:
         interpellation_raw: .*(Schriftliche|Kleine)\s+Anfrage(\s+Nr\.\s\d{1,2}\/\d+)?\s+(?P<originators_raw>.*)\s+Drucksache\s+(?P<interpellation_reference>\d{2}\/\d+)\s+(.*)?vom\s+(?P<interpellation_date>[\d\.]+)
-        answer_raw: .*Antwort(\s+\(.*\))?\s+(?P<answerers>.*)\s+Drucksache\s+(?P<reference>\d{2}\/\d+)\s+(.*)?vom\s+(?P<published_at>[\d\.]+)
+        answer_raw: .*(?:Antwort)?(\s+\(.*\))?\s+(?P<answerers>.*)\s?Drucksache\s+(?P<reference>\d{2}\/\d+)\s+(.*)?vom\s+(?P<published_at>[\d\.]+)
         originators_raw:
           store_as: originators
           split: ","
