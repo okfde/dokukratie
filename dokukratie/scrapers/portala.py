@@ -22,7 +22,11 @@ def search(context, data):
 
 
 def fetch_results(context, data):
-    item_count = int(data["item_count"])
+    item_count = int(data.get("item_count", 0))
+    if item_count < 1:
+        context.log.warn("`%s` results for `%s`" % (item_count, data["url"]))
+        return
+
     start = data.get("start", 0)
     chunksize = context.params.get("chunksize", 50)
     report_id = data["report_id"]
