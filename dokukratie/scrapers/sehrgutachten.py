@@ -33,11 +33,14 @@ WD_NAMES = {
     "wd8": "Umwelt, Naturschutz, Reaktorsicherheit, Bildung und Forschung",
     "wd9": "Gesundheit, Familie, Senioren, Frauen und Jugend",
     "wd10": "Kultur, Medien und Sport",
+    "wd11": "Europa",
     "pe6": "Europa",
 }
 
 
 def _clean_date(value):
+    if not value:
+        return
     value = value.lower().replace(" ", "")
     for i, month in enumerate(MONTHS):
         if month in value:
@@ -62,9 +65,7 @@ def parse(context, data):
             detail_data = {
                 "url": url,
                 "title": title,
-                "published_at": _clean_date(
-                    x(row, './td[@data-th="Veröffentlichung"]/p')
-                ),
+                "published_at": _clean_date(x(row, './td[@data-th="Datum"]/p')),
                 "keywords": x(row, './td[@data-th="Thema"]/p'),
                 "category": x(row, './td[@data-th="Dokumenttyp"]/p'),
                 "publisher": context.crawler.config["publisher"],

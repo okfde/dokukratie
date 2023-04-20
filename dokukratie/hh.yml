@@ -1,14 +1,27 @@
 name: hh
-description: Parlamentsdokumentation Hamburgische Bürgerschaft
+title: "[HH] Parlamentsdokumentation Hamburgische Bürgerschaft"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  der Hamburgischen Bürgerschaft. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-hh
+
 stealthy: true
 
 publisher:
   type: parliament
   name: Hamburgische Bürgerschaft
   url: https://www.buergerschaft-hh.de
+  country: de
   jurisdiction:
     id: hh
     name: Hamburg
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/hh/archive.json
+    mime_type: application/json+archive
 
 document_types:
   major_interpellation: 2  # Große Anfrage

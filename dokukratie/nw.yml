@@ -1,14 +1,27 @@
 name: nw
-description: Parlamentsdatenbank Nordrhein-Westfalen
+title: "[NW] Parlamentsdatenbank Nordrhein-Westfalen"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtags NRW. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-nw
+
 stealthy: true
 
 publisher:
   type: parliament
   name: Landtag NRW
   url: https://www.landtag.nrw.de
+  country: de
   jurisdiction:
     id: nw
     name: Nordrhein-Westfalen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/nw/archive.json
+    mime_type: application/json+archive
 
 document_types:
   major_interpellation: GROßE ANFRAGE

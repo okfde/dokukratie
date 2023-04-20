@@ -1,14 +1,27 @@
 name: th
-description: Parlamentsdokumentation Thüringen
+title: "[TH] Parlamentsdokumentation Thüringen"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Thüringer Landtags. Diese Sammlung ist Teil des Projekts "dokukratie" von
+  FragDenStaat, das versucht, alle Drucksachen aus allen 16 Landesparlamenten
+  einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-th
+
 stealthy: true
 
 publisher:
   type: parliament
   name: Thüringer Landtag
   url: https://www.thueringer-landtag.de
+  country: de
   jurisdiction:
     id: th
     name: Thüringen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/th/archive.json
+    mime_type: application/json+archive
 
 document_types:
   major_interpellation: 28  # Große Anfrage

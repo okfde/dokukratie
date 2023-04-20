@@ -1,14 +1,26 @@
 name: mv
-description: Parlamentsdokumentation Mecklenburg-Vorpommern
+title: "[MV] Parlamentsdokumentation Mecklenburg-Vorpommern"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtags Mecklenburg-Vorpommerns. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-mv
 stealthy: true
 
 publisher:
   type: parliament
   name: Landtag Mecklenburg-Vorpommern
   url: https://landtag-mv.de/
+  country: de
   jurisdiction:
     id: mv
     name: Mecklenburg-Vorpommern
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/mv/archive.json
+    mime_type: application/json+archive
 
 document_types:
   major_interpellation: 163  # Große Anfrage

@@ -1,5 +1,12 @@
 name: sn
-description: Parlamentsdokumentation EDAS Sachsen
+title: "[SN] Parlamentsdokumentation EDAS Sachsen"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Sächsischen Landtags. Diese Sammlung ist Teil des Projekts "dokukratie"
+  von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-sn
+
 stealthy: true
 
 document_types:
@@ -10,9 +17,15 @@ publisher:
   type: parliament
   name: Sächsischer Landtag
   url: https://www.landtag.sachsen.de/de
+  country: de
   jurisdiction:
     id: sn
     name: Sachsen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/sn/archive.json
+    mime_type: application/json+archive
 
 scraper:
   url: https://edas.landtag.sachsen.de

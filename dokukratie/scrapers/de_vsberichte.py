@@ -1,7 +1,6 @@
 from banal import ensure_list
 from furl import furl
-
-from .incremental import skip_incremental
+from memorious_extended.incremental import skip_incremental
 
 
 def parse_list(context, data):

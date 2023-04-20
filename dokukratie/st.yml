@@ -1,13 +1,27 @@
 name: st
-description: Parlamentsdokumentation Sachsen-Anhalt
+title: "[ST] Parlamentsdokumentation Sachsen-Anhalt"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtags von Sachsen-Anhalt. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-st
+
+stealthy: true
 
 publisher:
   type: parliament
   name: Landtag von Sachsen-Anhalt
   url: https://landtag.sachsen-anhalt.de
+  country: de
   jurisdiction:
     id: st
     name: Sachsen-Anhalt
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/st/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: starweb
@@ -22,7 +36,7 @@ pipeline:
 
   # emit scrape criteria
   init:
-    method: dokukratie.scrapers.starweb:init
+    method: dokukratie.operations:init
     params:
       legislative_terms: 7
       document_types:
@@ -35,7 +49,7 @@ pipeline:
 
   # initialize session
   fetch:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: search
 
@@ -78,7 +92,7 @@ pipeline:
       pass: download
 
   download:
-    method: dokukratie.scrapers.operations:fetch
+    method: memorious_extended.operations:fetch
     handle:
       pass: clean
 

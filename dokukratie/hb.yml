@@ -1,5 +1,11 @@
 name: hb
-description: Parlamentsdokumentation Bremen (PARIS)
+title: "[HB] Parlamentsdokumentation Bremen (PARIS)"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  der Bremischen Bürgerschaft. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-hb
 stealthy: true
 
 scraper:
@@ -11,9 +17,15 @@ publisher:
   type: parliament
   name: Bremische Bürgerschaft
   url: https://bremische-buergerschaft.de
+  country: de
   jurisdiction:
     id: hb
     name: Bremen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/hb/archive.json
+    mime_type: application/json+archive
 
 document_types:
   minor_interpellation: "KLEINE ANFRAGE UND ANTWORT DES SENATS"

@@ -1,14 +1,26 @@
 name: bb
-description: ELVIS Parlamentsdokumentation Brandenburg
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Brandenburgischen Landtags. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+title: "[BB] ELVIS Parlamentsdokumentation Brandenburg"
 stealthy: true
+prefix: de-dok-bb
 
 publisher:
   type: parliament
   name: Landtag Brandenburg
   url: https://www.landtag.brandenburg.de
+  country: de
   jurisdiction:
     id: bb
     name: Brandenburg
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/bb/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: starweb

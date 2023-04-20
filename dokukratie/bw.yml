@@ -1,14 +1,26 @@
 name: bw
-description: PARLIS Baden-Württemberg
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Baden-Württembergischen Landtags. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+title: "[BW] Parlamentsdokumentation (PARLIS) Baden-Württemberg"
 stealthy: true
+prefix: de-dok-bw
 
 publisher:
   type: parliament
   name: Landtag von Baden-Württemberg
   url: https://www.landtag-bw.de
+  country: de
   jurisdiction:
     id: bw
     name: Baden-Württemberg
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/bw/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: portala

@@ -1,14 +1,26 @@
 name: ni
-description: Niedersächsisches Landtagsdokumentationssystem
+title: "[NI] Niedersächsisches Landtagsdokumentationssystem"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtags Niedersachsens. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-ni
 stealthy: true
 
 publisher:
   type: parliament
   name: Landtag Niedersachsen
   url: https://www.landtag-niedersachsen.de/
+  country: de
   jurisdiction:
     id: ni
     name: Niedersachsen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/ni/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: starweb
