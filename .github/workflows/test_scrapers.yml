@@ -10,7 +10,7 @@ jobs:
   python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Show ref
         run: |
           echo "$GITHUB_REF"
