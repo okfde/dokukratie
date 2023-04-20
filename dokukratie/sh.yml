@@ -1,14 +1,28 @@
 name: sh
-description: Landtagsinformationssystem Schleswig-Holstein
+title: "[SH] Landtagsinformationssystem Schleswig-Holstein"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus dem
+  Landtagsinformationssystem Schleswig-Holsteins. Diese Sammlung ist Teil des
+  Projekts "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus
+  allen 16 Landesparlamenten einzusammeln (früher bekannt als
+  "kleineanfragen.de")
+prefix: de-dok-sh
+
 stealthy: true
 
 publisher:
   type: parliament
   name: Schleswig-Holsteinischer Landtag
   url: http://www.landtag.ltsh.de/
+  country: de
   jurisdiction:
     id: sh
     name: Schleswig-Holstein
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/sh/archive.json
+    mime_type: application/json+archive
 
 document_types:
   minor_interpellation: kleine

@@ -1,14 +1,26 @@
 name: he
-description: Parlamentsdatenbank Hessen
+title: "[HE] Parlamentsdatenbank Hessen"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Hessischen Landtags. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-he
 stealthy: true
 
 publisher:
   type: parliament
   name: Hessischer Landtag
   url: https://hessischer-landtag.de/
+  country: de
   jurisdiction:
     id: he
     name: Hessen
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/he/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: starweb

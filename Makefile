@@ -25,7 +25,7 @@ th: th.pull th.run_prod th.mmmeta th.upload
 dip: dip.pull dip.run_prod dip.mmmeta dip.upload
 parlamentsspiegel: parlamentsspiegel.pull parlamentsspiegel.run_prod parlamentsspiegel.mmmeta parlamentsspiegel.upload
 sehrgutachten: sehrgutachten.pull sehrgutachten.run_prod sehrgutachten.mmmeta sehrgutachten.upload
-vsberichte: vsberichte.pull vsberichte.run_prod vsberichte.mmmeta vsberichte.upload
+de_vsberichte: de_vsberichte.pull de_vsberichte.run_prod de_vsberichte.mmmeta de_vsberichte.upload
 
 # all the things
 config.states: bb.config be.config bw.config by.config hb.config hh.config he.config mv.config ni.config nw.config rp.config sh.config sl.config sn.config st.config th.config
@@ -45,19 +45,24 @@ download: download.states dip.download sehrgutachten.download
 
 he.run_prod:
 	# don't ddos hessen
-	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he --threads=4
+	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he
+	sqlite3 data/store/he/memorious.db "DELETE FROM memorious_tags WHERE value = '\"\"'"
+	sqlite3 data/store/he/memorious.db "VACUUM"
 
 parlamentsspiegel.run_prod:
 	# don't go back too far
-	START_DATE_DELTA=2 MMMETA=./data/store/parlamentsspiegel memorious run parlamentsspiegel --threads=4
+	START_DATE_DELTA=2 MMMETA=./data/store/parlamentsspiegel memorious run parlamentsspiegel
 
-vsberichte.run_prod:
+de_vsberichte.run_prod:
 	# don't use mmmeta
-	memorious run vsberichte --threads=4
+	MEMORIOUS_DATASTORE_URI=sqlite:///data/store/de_vsberichte/memorious.db memorious run de_vsberichte
 
 
 %.run_prod:
-	MMMETA=./data/store/$* memorious run $* --threads=4
+	MEMORIOUS_DATASTORE_URI=sqlite:///data/store/$*/memorious.db MMMETA=./data/store/$* memorious run $*
+	# cleanup tags table
+	sqlite3 data/store/$*/memorious.db "DELETE FROM memorious_tags WHERE value = '\"\"'"
+	sqlite3 data/store/$*/memorious.db "VACUUM"
 
 run.%:
 	memorious run $*
@@ -85,12 +90,13 @@ install.prod: install
 
 %.pull:
 	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$*/_mmmeta/db/ ./data/store/$*/_mmmeta/db
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 cp s3://$(DATA_BUCKET)/$*/memorious.db ./data/store/$*/memorious.db
 
 %.push:
-	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*.db*" ./data/store/$*/_mmmeta/ s3://$(DATA_BUCKET)/$*/_mmmeta
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*state.db*" ./data/store/$*/_mmmeta/ s3://$(DATA_BUCKET)/$*/_mmmeta
 
 %.upload:
-	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
+	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync --exclude "*state.db*" ./data/store/$*/ s3://$(DATA_BUCKET)/$*
 
 %.download:
 	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$* ./data/store/$*
@@ -120,3 +126,7 @@ clean:
 
 redis:
 	docker run -p 6379:6379 redis:alpine
+
+catalog:
+	python common/catalog.py
+	aws s3 --endpoint-url https://s3.investigativedata.org cp --no-progress --cache-control "public, max-age=3600" --metadata-directive REPLACE --acl public-read catalog.json s3://dokukratie/catalog.json

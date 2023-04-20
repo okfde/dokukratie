@@ -1,14 +1,27 @@
 name: rp
-description: OPAL Rheinland-Pfalz
+title: "[RP] OPAL Rheinland-Pfalz"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtags Rheinland-Pfalz. Diese Sammlung ist Teil des Projekts
+  "dokukratie" von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-rp
+
 stealthy: true
 
 publisher:
   type: parliament
   name: Landtag Rheinland-Pfalz
   url: https://www.landtag.rlp.de
+  country: de
   jurisdiction:
     id: rp
     name: Rheinland-Pfalz
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/rp/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: starweb
@@ -82,10 +95,10 @@ pipeline:
     method: memorious_extended.operations:regex_groups
     params:
       interpellation_raw:
-        - (Kleine|Große)\s+Anfrage\s+([\d\s]+)?(?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+Drucksache\s+(?P<interpellation_reference>\d{1,2}\/\d+)
+        - (Kleine|Große)\s+Anfrage\s+([\d\s]+)?(?P<originators_raw>.*)\s+(?P<interpellation_date>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\s+(?P<interpellation_reference>\d{1,2}\/\d+)
         - (KlAnfr|GrAnfr|Kleine\sAnfrage)\s+([\d\s]+)?(?P<originators_raw>.*)\s+(Antw|Antwort)\s(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\+s(?P<reference>\d{1,2}\/\d+)
       answer_raw:
-        - Antwort\s+(.*),\s+(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+Drucksache\s+(?P<reference>\d{1,2}\/\d+)
+        - Antwort\s+(.*),\s+(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\s+(?P<reference>\d{1,2}\/\d+)
         - (KlAnfr|GrAnfr|Kleine\sAnfrage)\s+([\d\s]+)?(?P<originators_raw>.*)\s+(Antw|Antwort)\s(?P<answerers>.*)\s+(?P<published_at>\d{2}\.\d{2}\.\d{4})\s+(Drucksache|Drs)\+s(?P<reference>\d{1,2}\/\d+)
       originators_raw:
         store_as: originators

@@ -1,5 +1,16 @@
 name: sehrgutachten
-description: 'Ausarbeitungen der Wissenschaftlichen Dienste des Bundestags'
+title: Ausarbeitungen der Wissenschaftlichen Dienste des Bundestags
+prefix: de-wd
+description: |
+  Alle veröffentlichten Gutachten der Wissenschaftlichen Dienste des Deutschen
+  Bundestags. Die Wissenschaftlichen Dienste des Deutschen Bundestages (WD)
+  sind eine Einrichtung, die es dem einzelnen Bundestagsabgeordneten
+  ermöglichen soll, sich unabhängig von der Sachkompetenz der Bundesministerien
+  unparteiisch zu bestimmten Themen zu informieren. Sie sollen so den
+  Wissensvorsprung der Exekutive gegenüber der Legislative verringern helfen.
+  Sie bilden als Teil der Abteilung W (Wissenschaft und Außenbeziehungen) eine
+  Unterabteilung der Verwaltung des Bundestages.
+
 stealthy: true
 
 document_types:
@@ -8,11 +19,18 @@ document_types:
 publisher:
   type: parliament-other
   id: wd
-  name: Wissenschaftliche Dienste des Deutschen Bundestages
+  name: Bundestag
+  description: Wissenschaftliche Dienste des Deutschen Bundestages
   url: https://www.bundestag.de/ausarbeitungen/
+  country: de
   jurisdiction:
     id: de
     name: Deutschland
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/sehrgutachten/archive.json
+    mime_type: application/json+archive
 
 pipeline:
 

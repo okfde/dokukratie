@@ -1,7 +1,7 @@
 from pprint import pformat
 from urllib.parse import urljoin
 
-from banal import clean_dict, ensure_dict
+from banal import clean_dict, ensure_dict, ensure_list
 from furl import furl
 from memorious.operations.parse import parse_for_metadata
 from memorious_extended.forms import get_form
@@ -84,15 +84,16 @@ class StarwebScraper(BaseScraper):
                 url = x(item, self.context.params["download_url"])
 
             if url:
-                if not url.startswith("http"):
-                    url = urljoin(data["url"], f"/{url}")
-                detail_data["url"] = detail_data["source_url"] = url
+                for url in ensure_list(url):
+                    if not url.startswith("http"):
+                        url = urljoin(data["url"], f"/{url}")
+                    detail_data["url"] = detail_data["source_url"] = url
 
-                data = {**data, **detail_data}
+                    data = {**data, **detail_data}
 
-                # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
-                if not skip_incremental(self.context, data, self.skip_incremental):
-                    self.context.emit(data=data)
+                    # only fetch new documents unless `MEMORIOUS_INCREMENTAL=false`
+                    if not skip_incremental(self.context, data, self.skip_incremental):
+                        self.context.emit(data=data)
 
         # pagination
         next_page = self.context.params.get("next_page")

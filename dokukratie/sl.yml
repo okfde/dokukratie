@@ -1,5 +1,12 @@
 name: sl
-description: Saarland - Landtagsdokumente
+title: "[SL] Saarland - Landtagsdokumente"
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Landtag des Saarlandes. Diese Sammlung ist Teil des Projekts "dokukratie"
+  von FragDenStaat, das versucht, alle Drucksachen aus allen 16
+  Landesparlamenten einzusammeln (früher bekannt als "kleineanfragen.de")
+prefix: de-dok-sl
+
 stealthy: true
 
 document_types:
@@ -10,9 +17,15 @@ publisher:
   type: parliament
   name: Landtag des Saarlandes
   url: https://www.landtag-saar.de
+  country: de
   jurisdiction:
     id: sl
     name: Saarland
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/sn/archive.json
+    mime_type: application/json+archive
 
 scraper:
   url: https://www.landtag-saar.de

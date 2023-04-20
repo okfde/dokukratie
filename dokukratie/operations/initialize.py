@@ -4,6 +4,7 @@ from pprint import pformat
 
 from banal import clean_dict, ensure_dict, ensure_list
 from furl import furl
+from memorious_extended.operations import init_zavod
 from memorious_extended.util import ensure_date, generate_url
 from memorious_extended.util import get_env_or_context as _geoc
 
@@ -72,4 +73,12 @@ def init(context, data=None):
         if "scraper" in context.crawler.config:
             data["scraper"] = context.crawler.config["scraper"]
 
-        context.emit(data=data)
+        # init zavod and export metadata & archive manifest
+        # this emits to the next stage
+        context.params["archive_manifest"] = {
+            "archive_type": "s3",
+            "bucket": _geoc(context, "DATA_BUCKET"),
+            "bucket_path": context.crawler.name,
+            "path_prefixed": False,
+        }
+        init_zavod(context, data)

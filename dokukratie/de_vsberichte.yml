@@ -1,0 +1,89 @@
+name: de_vsberichte
+title: Verfassungsschutzberichte des Bundes und der Länder
+prefix: de-vsb
+summary: |
+  Über was informiert der Verfassungs­schutz? Die Berichte des Geheimdienstes:
+  gesammelt, durchsuchbar und analysiert. Der Verfassungsschutz hat die Aufgabe
+  die Öffentlichkeit über verfassungsfeindliche Bestrebungen aufzuklären. Die
+  16 Landesämter und das Bundesamt für Verfassungsschutz veröffentlichen
+  jährlich Verfassungsschutzberichte. Diese Webseite ist ein
+  zivilgesellschaftliches Archiv, das den Zugang zu den Berichten erleichert.
+
+publisher:
+  type: other
+  id: vsbde
+  name: Verfassungsschutzberichte.de
+  description: |
+    Diese Webseite ist im Rahmen von Code for Germany entstanden. Code for
+    Germany fördert Entwicklungen im Bereich Transparenz, Open Data und Civic
+    Tech in Deutschland und setzt Impulse damit die Möglichkeiten der offenen
+    und freien Digitalisierung so vielen Menschen wie möglich zugute kommen.
+  url: https://verfassungsschutzberichte.de
+  country: de
+  jurisdiction:
+    id: de
+    name: Deutschland
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/de_vsberichte/archive.json
+    mime_type: application/json+archive
+
+document_types:
+  report: Verfassungsschutzbericht
+
+pipeline:
+  init:
+    method: memorious_extended.operations:init_zavod
+    params:
+      archive_manifest:
+        archive_type: s3
+        bucket: dokukratie
+        bucket_path: de_vsberichte
+        path_prefixed: false
+    handle:
+      pass: seed
+
+  seed:
+    method: dokukratie.operations:init
+    params:
+      url: https://verfassungsschutzberichte.de/api
+      document_types: report
+    handle:
+      pass: fetch
+
+  fetch:
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: parse_list
+
+  parse_list:
+    method: dokukratie.scrapers.de_vsberichte:parse_list
+    params:
+      skip_incremental:
+        key:
+          data: url
+        target:
+          stage: store
+    handle:
+      pass: fetch_detail
+
+  fetch_detail:
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: parse_detail
+
+  parse_detail:
+    method: memorious_extended.operations:parse_jq
+    params:
+      pattern: '{title: .title, url: .file_url}'
+    handle:
+      pass: download
+
+  download:
+    method: memorious_extended.operations:fetch
+    handle:
+      pass: store
+
+  store:
+    method: memorious_extended.operations:store

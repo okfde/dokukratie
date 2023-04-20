@@ -1,14 +1,26 @@
 name: be
-description: PARDOK Berlin
+description: |
+  Kleine und Große Anfragen und ihre Antworten aus der Parlamentsdokumentation
+  des Berliner Senats. Diese Sammlung ist Teil des Projekts "dokukratie" von
+  FragDenStaat, das versucht, alle Drucksachen aus allen 16 Landesparlamenten
+  einzusammeln (früher bekannt als "kleineanfragen.de")
+title: "[BE] Parlamentsdokumentation (PARDOK) des Abgeordnetenhauses von Berlin"
 stealthy: true
+prefix: de-dok-be
 
 publisher:
   type: parliament
   name: Abgeordnetenhaus Berlin
   url: https://parlament-berlin.de
+  country: de
   jurisdiction:
     id: be
     name: Berlin
+
+resources:
+  - name: archive.json
+    url: https://s3.investigativedata.org/dokukratie/be/archive.json
+    mime_type: application/json+archive
 
 scraper:
   name: portala
@@ -24,8 +36,7 @@ pipeline:
   init:
     method: dokukratie.operations:init
     params:
-      # legislative_terms: 18  # earliest: 11
-      legislative_terms: 19
+      legislative_terms: 19  # earliest: 11
       document_types: interpellation
       url: https://pardok.parlament-berlin.de/portala/browse.tt.html
       dateformat: "%Y %m %d"
