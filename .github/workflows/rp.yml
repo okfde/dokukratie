@@ -43,7 +43,7 @@ jobs:
       MEMORIOUS_DATASTORE_URI: ${{ secrets.MEMORIOUS_DATASTORE_URI }}
       REDIS_URL: redis://localhost:6379/0
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           ref: main
       - name: Set up Python
