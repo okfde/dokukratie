@@ -36,12 +36,6 @@ upload.states: bb.upload be.upload bw.upload by.upload hb.upload hh.upload he.up
 push.states: bb.push be.push bw.push by.push hb.push hh.push he.push mv.push ni.push nw.push rp.push sh.push sl.push sn.push st.push th.push
 download.states: bb.download be.download bw.download by.download hb.download hh.download he.download mv.download ni.download nw.download rp.download sh.download sl.download sn.download st.download th.download
 sync.states: bb.sync be.sync bw.sync by.sync hb.sync hh.sync he.sync mv.sync ni.sync nw.sync rp.sync sh.sync sl.sync sn.sync st.sync th.sync
-config.states: bb.config bw.config by.config hh.config he.config mv.config ni.config nw.config rp.config st.config th.config
-action.states: bb.action bw.action by.action hh.action he.action mv.action ni.action nw.action rp.action st.action th.action
-upload.states: bb.upload bw.upload by.upload hh.upload he.upload mv.upload ni.upload nw.upload rp.upload st.upload th.upload
-push.states: bb.push bw.push by.push hh.push he.push mv.push ni.push nw.push rp.push st.push th.push
-download.states: bb.download bw.download by.download hh.download he.download mv.download ni.download nw.download rp.download st.download th.download
-sync.states: states.config states.pull states.mmmeta states.upload
 
 config: config.states dip.config sehrgutachten.config
 pull: pull.states dip.pull sehrgutachten.pull
