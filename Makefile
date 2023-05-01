@@ -101,7 +101,7 @@ install.prod:
 %.download:
 	aws --endpoint-url $(ARCHIVE_ENDPOINT_URL) s3 sync s3://$(DATA_BUCKET)/$* ./data/store/$*
 
-test: install.test
+test: install.dev
 	rm -rf testdata
 	mkdir testdata
 	pytest -s --cov=dokukratie --cov-report term-missing ./tests/
