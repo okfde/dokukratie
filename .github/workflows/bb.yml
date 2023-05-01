@@ -56,7 +56,7 @@ jobs:
           sudo apt-get install -y -qq libicu-dev libpq-dev
           pip install --no-cache-dir -U setuptools pip
           pip install --no-cache-dir -q pyicu awscli
-          make install.prod
+          make install
       - name: Pull mmmeta
         run: |
           make bb.pull
