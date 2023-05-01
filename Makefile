@@ -70,11 +70,11 @@ run.%:
 install:
 	pip install -e .
 
-install.dev: install
-	pip install -r requirements-dev.txt
+install.dev:
+	pip install -e ".[dev]"
 
-install.prod: install
-	pip install -r requirements-prod.txt
+install.prod:
+	pip install -e ".[psql]"
 
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
