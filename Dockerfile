@@ -2,7 +2,7 @@ FROM python:3-bullseye
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get -y upgrade
-RUN apt-get install -y python3-icu curl unzip
+RUN apt-get install -y python3-icu curl unzip sqlite3
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 RUN unzip awscliv2.zip
