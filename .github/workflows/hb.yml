@@ -18,6 +18,9 @@ jobs:
   scrape:
     runs-on: ubuntu-latest
     container: ghcr.io/okfde/dokukratie:main
+    defaults:
+      run:
+        working-directory: /opt/dokukratie
     services:
       redis:
         image: redis:alpine
