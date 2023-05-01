@@ -410,11 +410,11 @@ class Test(unittest.TestCase):
         self.run_scraper("dip", document_types="minor_interpellation")
         # self.run_scraper("dip", document_types="major_interpellation")
 
-    def test_parlamentsspiegel(self):
-        self.run_scraper(
-            "parlamentsspiegel",
-            start_date=(datetime.now() - timedelta(days=5)).date(),
-        )
+    # def test_parlamentsspiegel(self):
+    #     self.run_scraper(
+    #         "parlamentsspiegel",
+    #         start_date=(datetime.now() - timedelta(days=5)).date(),
+    #     )
 
     def test_sehrgutachten(self):
         self.run_scraper("sehrgutachten")

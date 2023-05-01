@@ -46,6 +46,7 @@ download: download.states dip.download sehrgutachten.download
 he.run_prod:
 	# don't ddos hessen
 	MEMORIOUS_HTTP_RATE_LIMIT=30 MMMETA=./data/store/he memorious run he
+	# cleanup tags table
 	sqlite3 data/store/he/memorious.db "DELETE FROM memorious_tags WHERE value = '\"\"'"
 	sqlite3 data/store/he/memorious.db "VACUUM"
 
@@ -72,9 +73,6 @@ install:
 
 install.dev:
 	pip install -e ".[dev]"
-
-install.prod:
-	pip install -e ".[psql]"
 
 %.config:
 	mkdir -p ./data/store/$*/_mmmeta
