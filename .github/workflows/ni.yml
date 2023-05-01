@@ -17,6 +17,7 @@ on:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    container: ghcr.io/okfde/dokukratie:main
     services:
       redis:
         image: redis:alpine
@@ -28,51 +29,24 @@ jobs:
         ports:
           - 6379:6379
     env:
-      ARCHIVE_TYPE: s3
       ARCHIVE_BUCKET: ${{ secrets.ARCHIVE_BUCKET }}
       ARCHIVE_ENDPOINT_URL: ${{ secrets.ARCHIVE_ENDPOINT_URL }}
       DATA_BUCKET: ${{ secrets.DATA_BUCKET }}
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: eu-central-1
-      AWS_DEFAULT_REGION: eu-central-1
-      MEMORIOUS_CONFIG_PATH: dokukratie
-      MEMORIOUS_EXPIRE: 30
-      MEMORIOUS_HTTP_TIMEOUT: 60
-      MEMORIOUS_CONTINUE_ON_ERROR: 1
-      REDIS_URL: redis://localhost:6379/0
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: main
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-      - name: Install dependencies
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo apt-get install -y -qq libicu-dev libpq-dev
-          pip install --no-cache-dir -U setuptools pip
-          pip install --no-cache-dir -q pyicu awscli
-          make install
-      - name: Pull mmmeta
-        run: |
-          make ni.pull
+      - name: Pull crawler runtime data
+        run: make ni.pull
       - name: Run crawler
         env:
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
           LEGISLATIVE_TERMS: ${{ github.event.inputs.legislative_term }}
           DOCUMENT_TYPES: ${{ github.event.inputs.document_type }}
-        run: |
-          make ni.run_prod
+        run: make ni.run_prod
       - name: Generate mmmeta
         if: always()
-        run: |
-          make ni.mmmeta
+        run: make ni.mmmeta
       - name: Upload data
         if: always()
-        run: |
-          make ni.upload
+        run: make ni.upload
